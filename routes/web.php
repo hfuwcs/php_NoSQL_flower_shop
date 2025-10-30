@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
@@ -21,7 +22,8 @@ Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])
 Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])
     ->middleware('auth')
     ->name('reviews.vote');
-
+//Leader board
+Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 
 //Default
 Route::get('/dashboard', function () {

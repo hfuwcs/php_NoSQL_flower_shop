@@ -11,6 +11,7 @@
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <a href="{{ route('products.index') }}" class="text-xl font-bold text-primary-dark">FlowerShop</a>
             <div class="flex items-center space-x-4">
+                <a href="{{ route('leaderboard.index') }}" class="text-text-muted hover:text-primary-dark">Leaderboard</a>
                 @auth
                     <span>Welcome, {{ auth()->user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}">

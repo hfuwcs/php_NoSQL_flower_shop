@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class UpdateProductStatsJob implements ShouldQueue
 {
@@ -46,11 +47,21 @@ class UpdateProductStatsJob implements ShouldQueue
             })->first();
 
         if ($stats) {
+            // Cập nhật MongoDB
             Product::where('_id', $this->product->id)->update([
                 'average_rating' => $stats->average_rating,
                 'review_count' => $stats->review_count,
             ]);
 
+            // CẬP NHẬT BẢNG XẾP HẠNG REDIS
+            $leaderboardKey = 'leaderboard:products:top_rated';
+            $productId = $this->product->id;
+            $newAverageRating = $stats->average_rating;
+
+            Redis::zadd($leaderboardKey, $newAverageRating, $productId);
+            Log::channel('stack')->info("Updated leaderboard '{$leaderboardKey}' for Product ID: {$productId} with new score: {$newAverageRating}");
+
+            // Xóa cache sản phẩm
             $cacheKey = "product:{$this->product->id}";
             Cache::forget($cacheKey);
             Log::channel('stack')->info("Invalidated product cache: {$cacheKey}");

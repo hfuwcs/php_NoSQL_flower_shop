@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])
-    ->middleware('auth')
+    ->middleware('auth','throttle:3,10') //3 request trong 10 phút
     ->name('reviews.store');
 
 //Reviews

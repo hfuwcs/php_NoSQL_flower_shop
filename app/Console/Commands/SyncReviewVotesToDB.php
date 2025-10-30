@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Review;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
@@ -25,16 +26,13 @@ class SyncReviewVotesToDB extends Command
         $pattern = $prefix . 'review:votes:*';
         Log::channel('stack')->info("Scanning for keys with pattern: '{$pattern}'");
 
-        // **SỬA LỖI TẠI ĐÂY: Chuyển sang SCAN**
-        $voteKeys = [];
-        $cursor = "0";
-        do {
-            // Quét 100 key mỗi lần
-            [$cursor, $keys] = Redis::scan($cursor, 'match', $pattern, 'count', 100);
-            $voteKeys = array_merge($voteKeys, $keys);
-        } while ($cursor !== "0");
+        // Lấy tất cả keys và filter theo pattern
+        $allKeys = Redis::keys('*');
+        $voteKeys = array_filter($allKeys, function($key) use ($prefix) {
+            return str_starts_with($key, $prefix . 'review:votes:');
+        });
         
-        Log::channel('stack')->info(count($voteKeys) . " key(s) found after SCAN.");
+        Log::channel('stack')->info(count($voteKeys) . " key(s) found.");
         if (!empty($voteKeys)) {
             Log::channel('stack')->debug("Keys found: " . implode(', ', $voteKeys));
         }
@@ -50,9 +48,10 @@ class SyncReviewVotesToDB extends Command
         foreach ($voteKeys as $redisKeyWithPrefix) {
             Log::channel('stack')->info("Processing Redis key: {$redisKeyWithPrefix}");
 
-            $votes = Redis::hGetAll($redisKeyWithPrefix);
-            
+            // Lấy key không có prefix để dùng với hGetAll
             $keyWithoutPrefix = Str::after($redisKeyWithPrefix, $prefix);
+            $votes = Redis::hGetAll($keyWithoutPrefix);
+            
             $reviewId = str_replace('review:votes:', '', $keyWithoutPrefix);
             
             $upvotes = (int) ($votes['upvotes'] ?? 0);
@@ -66,18 +65,26 @@ class SyncReviewVotesToDB extends Command
                  continue;
             }
 
-            $updatedCount = Review::where('_id', $reviewId)->incrementEach([
-                'upvotes' => $upvotes,
-                'downvotes' => $downvotes,
-            ]);
+            // Kiểm tra review có tồn tại không
+            $review = Review::where('_id', $reviewId)->first();
+            
+            if ($review) {
+                // Increment votes
+                $review->increment('upvotes', $upvotes);
+                $review->increment('downvotes', $downvotes);
+                
+                //Xóa cache của product cha
+                $productCacheKey = "product:{$review->product_id}";
+                Cache::forget($productCacheKey);
+                Log::channel('stack')->info("Invalidated product cache: {$productCacheKey}");
 
-            Log::channel('stack')->info("MongoDB update query executed for ID: {$reviewId}. Documents updated: {$updatedCount}");
 
-            if ($updatedCount > 0) {
-                Redis::del($redisKeyWithPrefix);
+                // Xóa key trong Redis sau khi sync thành công
+                Redis::del($keyWithoutPrefix);
                 Log::channel('stack')->info("Successfully synced and deleted Redis key: {$redisKeyWithPrefix}");
+                Log::channel('stack')->info("Updated Review ID: {$reviewId} - New upvotes: {$review->upvotes}, New downvotes: {$review->downvotes}");
             } else {
-                Log::channel('stack')->error("FAILED to find and update document in MongoDB for Review ID: {$reviewId}. Verify the ID exists in the 'reviews' collection.");
+                Log::channel('stack')->error("FAILED to find document in MongoDB for Review ID: {$reviewId}. Verify the ID exists in the 'reviews' collection.");
             }
         }
 

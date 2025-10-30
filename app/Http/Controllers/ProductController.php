@@ -20,7 +20,8 @@ class ProductController extends Controller
         // Key để lưu cache trong Redis
         $cacheKey = "product:{$product->id}";
 
-        $productData = Cache::tags(['products'])->remember($cacheKey, 3600, function () use ($product) {
+        // phpredis không hỗ trợ tags, nên dùng remember() trực tiếp
+        $productData = Cache::remember($cacheKey, 3600, function () use ($product) {
             return $product->load(['reviews', 'reviews.user']);
         });
 

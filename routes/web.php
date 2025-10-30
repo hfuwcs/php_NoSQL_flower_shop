@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -24,6 +25,13 @@ Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])
     ->name('reviews.vote');
 //Leader board
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
+
+//Cart
+Route::middleware('auth')->group(function () {
+    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+});
+
 
 //Default
 Route::get('/dashboard', function () {

@@ -1,6 +1,4 @@
-@extends('layouts.layout')
-
-@section('content')
+<x-app-layout>
     <div class="bg-white p-8 rounded-lg shadow-lg">
         <h1 class="text-4xl font-bold text-primary-dark mb-2 text-center">Top Rated Products</h1>
         <p class="text-center text-text-muted mb-8">Discover the products our customers love the most!</p>
@@ -24,4 +22,4 @@
             @endforelse
         </div>
     </div>
-@endsection
+</x-app-layout>

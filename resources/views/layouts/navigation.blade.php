@@ -5,25 +5,39 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
+                    <a href="{{ route('products.index') }}">
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                    <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                        {{ __('Products') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('leaderboard.index')" :active="request()->routeIs('leaderboard.index')">
+                        {{ __('Leaderboard') }}
                     </x-nav-link>
                 </div>
             </div>
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                {{--Giỏ hàng--}}
+                <a href="{{ route('cart.index') }}" class="relative text-gray-500 hover:text-gray-700 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">...</svg>
+                    @if(isset($cartItemCount) && $cartItemCount > 0)
+                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ $cartItemCount }}</span>
+                    @endif
+                </a>
+
+                @auth
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
+                            @if(Auth::user())
+                                <div>{{ Auth::user()->name }}</div>
+                            @endif
 
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -43,13 +57,18 @@
                             @csrf
 
                             <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
+                                onclick="event.preventDefault();
                                                 this.closest('form').submit();">
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
                 </x-dropdown>
+                @else
+                {{-- Login/Register --}}
+                <a href="{{ route('login') }}" class="text-sm text-gray-700 dark:text-gray-500 underline">Log in</a>
+                <a href="{{ route('register') }}" class="ml-4 text-sm text-gray-700 dark:text-gray-500 underline">Register</a>
+                @endauth
             </div>
 
             <!-- Hamburger -->
@@ -67,11 +86,15 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+            <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                {{ __('Products') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('leaderboard.index')" :active="request()->routeIs('leaderboard.index')">
+                {{ __('Leaderboard') }}
             </x-responsive-nav-link>
         </div>
 
+        @auth
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
@@ -89,12 +112,25 @@
                     @csrf
 
                     <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
+                        onclick="event.preventDefault();
                                         this.closest('form').submit();">
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
             </div>
         </div>
+        @else
+        <!-- Guest Options -->
+        <div class="pt-4 pb-1 border-t border-gray-200">
+            <div class="mt-3 space-y-1">
+                <x-responsive-nav-link :href="route('login')">
+                    {{ __('Log in') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('register')">
+                    {{ __('Register') }}
+                </x-responsive-nav-link>
+            </div>
+        </div>
+        @endauth
     </div>
 </nav>

@@ -1,6 +1,4 @@
-@extends('layouts.layout')
-
-@section('content')
+<x-app-layout>
 <div class="bg-white p-8 rounded-lg shadow-lg">
     {{-- ========= PHẦN ĐIỀU HƯỚNG VÀ THÔNG BÁO ========= --}}
     <a href="{{ route('products.index') }}" class="text-primary-dark hover:text-pink-600 mb-6 block transition-colors">&larr; Back to Products</a>
@@ -20,6 +18,31 @@
             <p class="text-text-muted text-sm uppercase">{{ $product->category }}</p>
             <h1 class="text-4xl font-bold text-gray-900 mt-1">{{ $product->name }}</h1>
             <p class="mt-4 text-gray-700 leading-relaxed">{{ $product->description }}</p>
+
+            {{-- ========= PHẦN THÊM VÀO GIỎ HÀNG (BẮT ĐẦU) ========= --}}
+            <div class="mt-8">
+                <form action="{{ route('cart.add', $product) }}" method="POST">
+                    @csrf
+
+                    {{-- (Tùy chọn) Thêm input cho số lượng --}}
+                    <div class="flex items-center space-x-4">
+                        <input type="number" name="quantity" value="1" min="1" class="w-20 rounded-md border-gray-300">
+                        <button type="submit" class="bg-primary-dark text-white font-bold py-2 px-6 rounded-md hover:bg-pink-500 transition-colors">
+                            Add to Cart
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Hiển thị thông báo thành công --}}
+            @if (session('success'))
+            <div class="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                <span class="block sm:inline">{{ session('success') }}</span>
+            </div>
+            @endif
+
+            {{-- ========= PHẦN THÊM VÀO GIỎ HÀNG (KẾT THÚC) ========= --}}
+
 
             {{-- ========= PHẦN ĐÁNH GIÁ (BẮT ĐẦU) ========= --}}
             <div class="mt-8">
@@ -121,4 +144,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-app-layout>

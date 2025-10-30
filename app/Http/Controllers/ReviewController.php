@@ -28,17 +28,27 @@ class ReviewController extends Controller
     }
     public function vote(Request $request, Review $review)
     {
-        // 1. Validate input
-        $request->validate([
-            'vote_type' => ['required', 'string', 'in:up,down'],
-        ]);
+        $request->validate(['vote_type' => ['required', 'string', 'in:up,down']]);
 
-        // 2. Xác định key trong Redis và field cần tăng
         $redisKey = "review:votes:{$review->id}";
         $field = $request->input('vote_type') === 'up' ? 'upvotes' : 'downvotes';
+        
+        $newVoteCountInRedis = Redis::hIncrBy($redisKey, $field, 1);
 
-        // 3. Tăng giá trị trong Redis Hash
-        Redis::hIncrBy($redisKey, $field, 1);
+        if ($request->wantsJson()) {
+            $pendingVotes = Redis::hGetAll($redisKey);
+            $pendingUpvotes = (int) ($pendingVotes['upvotes'] ?? 0);
+            $pendingDownvotes = (int) ($pendingVotes['downvotes'] ?? 0);
+
+            $totalUpvotes = $review->upvotes + $pendingUpvotes;
+            $totalDownvotes = $review->downvotes + $pendingDownvotes;
+            
+            return response()->json([
+                'success' => true,
+                'upvotes' => $totalUpvotes,
+                'downvotes' => $totalDownvotes,
+            ]);
+        }
 
         return back()->with('success', 'Thank you for your feedback!');
     }

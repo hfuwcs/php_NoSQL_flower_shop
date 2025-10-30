@@ -82,30 +82,30 @@
                         </div>
                         <h3 class="text-lg font-semibold text-gray-800">{{ $review->title }}</h3>
                         <p class="text-gray-600 mt-1">{{ $review->content }}</p>
-                        <div class="mt-4 flex items-center space-x-4">
+                        <div class="mt-4 flex items-center space-x-4 js-vote-container" data-review-id="{{ $review->id }}">
                             <span class="text-sm text-text-muted">Was this review helpful?</span>
 
                             {{-- Form cho Upvote --}}
-                            <form action="{{ route('reviews.vote', $review) }}" method="POST">
+                            <form class="js-vote-form">
                                 @csrf
                                 <input type="hidden" name="vote_type" value="up">
                                 <button type="submit" class="flex items-center space-x-1 text-gray-500 hover:text-green-500">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
                                     </svg>
-                                    <span>{{ $review->upvotes ?? 0 }}</span>
+                                    <span class="js-upvote-count">{{ $review->upvotes ?? 0 }}</span>
                                 </button>
                             </form>
 
                             {{-- Form cho Downvote --}}
-                            <form action="{{ route('reviews.vote', $review) }}" method="POST">
+                            <form class="js-vote-form">
                                 @csrf
                                 <input type="hidden" name="vote_type" value="down">
                                 <button type="submit" class="flex items-center space-x-1 text-gray-500 hover:text-red-500">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                     </svg>
-                                    <span>{{ $review->downvotes ?? 0 }}</span>
+                                    <span class="js-downvote-count">{{ $review->downvotes ?? 0 }}</span>
                                 </button>
                             </form>
                         </div>

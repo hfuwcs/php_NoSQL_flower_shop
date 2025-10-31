@@ -84,4 +84,73 @@ class CartService
             'total' => $total,
         ];
     }
+
+    /**
+     * Cập nhật số lượng của một item trong giỏ hàng.
+     * Nếu số lượng <= 0, item sẽ bị xóa.
+     *
+     * @param User $user
+     * @param string $productId ID của sản phẩm cần cập nhật.
+     * @param int $quantity Số lượng mới.
+     * @return Cart|null
+     */
+    public function updateItemQuantity(User $user, string $productId, int $quantity): ?Cart
+    {
+        $cart = Cart::where('user_id', $user->id)->first();
+
+        if (!$cart) {
+            return null;
+        }
+
+        $items = $cart->items ?? [];
+        $productFound = false;
+
+        foreach ($items as $index => &$item) { //reference
+            if ($item['product_id'] === $productId) {
+                if ($quantity > 0) {
+                    $item['quantity'] = $quantity;
+                } else {
+                    // Nếu số lượng mới là 0 hoặc âm, xóa item
+                    unset($items[$index]);
+                }
+                $productFound = true;
+                break;
+            }
+        }
+
+        if ($productFound) {
+            $cart->items = array_values($items);
+            $cart->save();
+        }
+
+        return $cart;
+    }
+
+    /**
+     * Xóa một item khỏi giỏ hàng.
+     *
+     * @param User $user
+     * @param string $productId ID của sản phẩm cần xóa.
+     * @return Cart|null
+     */
+    public function removeItem(User $user, string $productId): ?Cart
+    {
+        $cart = Cart::where('user_id', $user->id)->first();
+
+        if (!$cart) {
+            return null;
+        }
+
+        $items = $cart->items ?? [];
+
+        // Lọc ra mảng mới không chứa sản phẩm cần xóa
+        $newItems = array_filter($items, function ($item) use ($productId) {
+            return $item['product_id'] !== $productId;
+        });
+
+        $cart->items = array_values($newItems);
+        $cart->save();
+
+        return $cart;
+    }
 }

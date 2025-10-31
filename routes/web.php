@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])
-    ->middleware('auth','throttle:3,10') //3 request trong 10 phút
+    ->middleware('auth', 'throttle:3,10') //3 request trong 10 phút
     ->name('reviews.store');
 
 //Reviews
@@ -28,8 +28,10 @@ Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leade
 
 //Cart
 Route::middleware('auth')->group(function () {
-    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/cart/update/{productId}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])->name('cart.remove');
 });
 
 
@@ -44,4 +46,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

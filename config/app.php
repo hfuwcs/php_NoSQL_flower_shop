@@ -128,5 +128,6 @@ return [
     'providers' => ServiceProvider::defaultProviders()->merge([
         App\Providers\AppServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
+        Spatie\Csp\CspServiceProvider::class,
     ])->toArray(),
 ];

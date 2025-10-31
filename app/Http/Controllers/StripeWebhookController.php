@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Stripe\Stripe;
 use Stripe\Webhook;
 use Stripe\Exception\SignatureVerificationException;
@@ -13,11 +14,16 @@ class StripeWebhookController extends Controller
 {
     public function handleWebhook(Request $request)
     {
-        // Lấy webhook signing secret từ .env
-        $endpoint_secret = config('STRIPE_WEBHOOK_SECRET');
+        $endpoint_secret = config('stripe.webhook_secret');
         $payload = $request->getContent();
         $sig_header = $request->server('HTTP_STRIPE_SIGNATURE');
         $event = null;
+
+        Log::info('Webhook received', [
+            'endpoint_secret' => $endpoint_secret ? 'Set' : 'Not set',
+            'sig_header' => $sig_header ? 'Present' : 'Missing',
+            'payload_length' => strlen($payload)
+        ]);
 
         try {
             // Verify Signature từ Stripe
@@ -26,10 +32,12 @@ class StripeWebhookController extends Controller
             );
         } catch (UnexpectedValueException $e) {
             // Invalid payload
-            return response()->json(['error' => 'Invalid payload'], 400);
+            Log::error('Webhook payload error: ' . $e->getMessage());
+            return response()->json(['error' => 'Invalid payload', 'message' => $e->getMessage()], 400);
         } catch (SignatureVerificationException $e) {
             // Invalid signature
-            return response()->json(['error' => 'Invalid signature'], 400);
+            Log::error('Webhook signature error: ' . $e->getMessage());
+            return response()->json(['error' => 'Invalid signature', 'message' => $e->getMessage()], 400);
         }
 
         switch ($event->type) {

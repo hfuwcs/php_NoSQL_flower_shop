@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Services\CartService;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
@@ -49,16 +50,25 @@ class CheckoutController extends Controller
 
     /**
      * Xử lý việc tạo đơn hàng và bắt đầu thanh toán.
-     * (Sẽ được triển khai ở các bước sau)
      */
     public function process(Request $request)
     {
-        // TODO: Validate dữ liệu địa chỉ
-        // TODO: Gọi OrderService để tạo đơn hàng
-        // TODO: Tạo Stripe Payment Intent
-        // TODO: Trả về client_secret cho frontend
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+        ]);
 
-        dd($request->all()); // dump data để check
+        $order = Order::where('user_id', $request->user()->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->firstOrFail();
+
+        $order->shipping_address = $validatedData;
+        $order->save();
+
+        return response()->json(['success' => true, 'message' => 'Address saved. Proceeding to payment.']);
     }
     public function success()
     {

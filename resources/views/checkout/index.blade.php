@@ -78,38 +78,61 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const stripe = Stripe("{{ $stripeKey }}");
-
-            const options = {
-                clientSecret: "{{ $clientSecret }}",
-                appearance: {
-                    theme: 'stripe'
-                },
-            };
-
-            const elements = stripe.elements(options);
+            const elements = stripe.elements({
+                clientSecret: "{{ $clientSecret }}"
+            });
             const paymentElement = elements.create('payment');
             paymentElement.mount('#payment-element');
 
             const form = document.getElementById('payment-form');
             const submitButton = document.getElementById('submit-button');
+            const messageContainer = document.getElementById('payment-message');
 
             form.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 submitButton.disabled = true;
                 submitButton.textContent = 'Processing...';
+                messageContainer.classList.add('hidden');
 
-                const {
-                    error
-                } = await stripe.confirmPayment({
-                    elements,
-                    confirmParams: {
-                        // URL để Stripe redirect người dùng về sau khi thanh toán thành công
-                        return_url: "{{ route('checkout.success') }}", // TODO: Tạo route này sau
-                    },
-                });
+                const formData = new FormData(form);
+                const addressData = {
+                    name: formData.get('name'),
+                    address: formData.get('address'),
+                    city: formData.get('city'),
+                    phone: formData.get('phone'),
+                    _token: formData.get('_token')
+                };
 
-                if (error) {
-                    const messageContainer = document.getElementById('payment-message');
+                try {
+                    const response = await fetch("{{ route('checkout.process') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify(addressData)
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Failed to save address.');
+                    }
+
+                    const {
+                        error
+                    } = await stripe.confirmPayment({
+                        elements,
+                        confirmParams: {
+                            return_url: "{{ route('checkout.success') }}",
+                        },
+                    });
+
+                    if (error) {
+                        throw new Error(error.message);
+                    }
+
+                } catch (error) {
                     messageContainer.textContent = error.message;
                     messageContainer.classList.remove('hidden');
                     submitButton.disabled = false;

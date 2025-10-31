@@ -11,6 +11,7 @@
         "laravel/tinker": "^2.10.1",
         "mongodb/laravel-mongodb": "5.5",
         "predis/predis": "^3.2",
+        "spatie/laravel-csp": "^3.21",
         "stripe/stripe-php": "^18.1"
     },
     "require-dev": {

@@ -3,29 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Services\CartService;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
+use Stripe\PaymentIntent;
+use Stripe\Stripe;
 
 class CheckoutController extends Controller
 {
-    public function __construct(protected CartService $cartService)
-    {
-    }
+    public function __construct(
+        protected CartService $cartService,
+        protected OrderService $orderService
+    ) {}
 
     /**
      * Hiển thị trang checkout.
      */
     public function index(Request $request)
     {
-        $cartData = $this->cartService->getCartContent($request->user());
+        $user = $request->user();
+        $order = $this->orderService->createPendingOrderFromCart($user);
 
-        // Không cho phép checkout nếu giỏ hàng trống.
-        if (empty($cartData['items'])) {
-            return redirect()->route('cart.index')->with('error', 'Your cart is empty. Please add products before proceeding to checkout.');
+        if (!$order) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
+        $order->load('items');
+
+        Stripe::setApiKey(config('stripe.secret'));
+
+        $paymentIntent = PaymentIntent::create([
+            'amount' => (int) ($order->total_amount * 100),
+            'currency' => 'usd',
+            'automatic_payment_methods' => ['enabled' => true],
+            'metadata' => [
+                'order_id' => $order->id,
+            ],
+        ]);
+
         return view('checkout.index', [
-            'cartItems' => $cartData['items'],
-            'cartTotal' => $cartData['total'],
+            'order' => $order,
+            'clientSecret' => $paymentIntent->client_secret,
+            'stripeKey' => config('stripe.key'),
         ]);
     }
 
@@ -41,5 +59,9 @@ class CheckoutController extends Controller
         // TODO: Trả về client_secret cho frontend
 
         dd($request->all()); // dump data để check
+    }
+    public function success()
+    {
+        return view('checkout.success');
     }
 }

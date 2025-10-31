@@ -6,6 +6,7 @@ use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // Route::get('/', function () {
@@ -37,9 +38,11 @@ Route::middleware('auth')->group(function () {
     //Check out (aka Thanh toán)
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware('auth');
     Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process')->middleware('auth');
+    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success')->middleware('auth');
 });
 
-
+//Stripe Webhook
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
 
 
 //Default

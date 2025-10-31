@@ -15,6 +15,7 @@ class ProductFactory extends Factory
             'images' => [fake()->imageUrl(), fake()->imageUrl()],
             'average_rating' => 0,
             'review_count' => 0,
+            'price' => fake()->randomFloat(2, 10, 999),
         ];
     }
 }

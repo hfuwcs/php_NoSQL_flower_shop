@@ -56,7 +56,44 @@ class OrderService
 
             // Remove user's cart when succusfylly create an order
             $user->cart()->delete();
-            
+
+            return $order;
+        });
+    }
+
+    /**
+     * Tạo một đơn hàng "pending" từ giỏ hàng mà không cần địa chỉ giao hàng.
+     * Dùng để khởi tạo quy trình thanh toán.
+     */
+    public function createPendingOrderFromCart(User $user): ?Order
+    {
+        $existingPendingOrder = Order::where('user_id', $user->id)->where('status', 'pending')->first();
+        if ($existingPendingOrder) {
+            return $existingPendingOrder;
+        }
+
+        $cartData = $this->cartService->getCartContent($user);
+        //dd($cartData);
+        if (empty($cartData['items'])) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($user, $cartData) {
+            $order = Order::create([
+                'user_id' => $user->id,
+                'status' => 'pending',
+                'total_amount' => $cartData['total'],
+                'shipping_address' => [], // TODO: Update shipping adress
+            ]);
+
+            $orderItemsData = [];
+            foreach ($cartData['items'] as $cartItem) {
+                //TODO: Update các field khác
+                $orderItemsData[] = [ 'order_id' => $order->id, /* ... các trường khác ... */ ];
+            }
+            OrderItem::insert($orderItemsData);
+
+            $user->cart()->delete();
             return $order;
         });
     }

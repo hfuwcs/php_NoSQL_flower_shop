@@ -18,6 +18,7 @@ class Product extends Model
         'images',
         'average_rating',
         'review_count',
+        'price',
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ class Product extends Model
             'images' => 'array',
             'average_rating' => 'double',
             'review_count' => 'integer',
+            'price' => 'decimal:2',
         ];
     }
 

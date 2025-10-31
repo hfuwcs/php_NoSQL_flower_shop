@@ -9,7 +9,7 @@
                 <!-- Cột trái: Thông tin giao hàng -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h2 class="text-xl font-semibold mb-4">Shipping Information</h2>
-                    
+
                     {{-- Name --}}
                     <div class="mb-4">
                         <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
@@ -40,20 +40,21 @@
                     <h2 class="text-xl font-semibold mb-4">Your Order</h2>
 
                     <div class="space-y-4 border-b pb-4">
-                        @foreach($cartItems as $item)
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <p class="font-semibold">{{ $item['product_name'] }}</p>
-                                    <p class="text-sm text-gray-500">Qty: {{ $item['quantity'] }}</p>
-                                </div>
-                                <p class="font-semibold">${{ number_format($item['price'] * $item['quantity'], 2) }}</p>
+                        @foreach($order->items as $item)
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold">{{ $item->product_name }}</p>
+                                <p class="text-sm text-gray-500">Qty: {{ $item->quantity }}</p>
                             </div>
+                            <p class="font-semibold">${{ number_format($item->price_at_purchase * $item->quantity, 2) }}</p>
+                        </div>
                         @endforeach
                     </div>
 
+
                     <div class="mt-4 flex justify-between text-xl font-bold">
                         <p>Total</p>
-                        <p>${{ number_format($cartTotal, 2) }}</p>
+                        <p>${{ number_format($order->total_amount, 2) }}</p>
                     </div>
 
                     <div class="mt-6">
@@ -71,4 +72,50 @@
             </div>
         </form>
     </div>
+
+    {{-- Script --}}
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const stripe = Stripe("{{ $stripeKey }}");
+
+            const options = {
+                clientSecret: "{{ $clientSecret }}",
+                appearance: {
+                    theme: 'stripe'
+                },
+            };
+
+            const elements = stripe.elements(options);
+            const paymentElement = elements.create('payment');
+            paymentElement.mount('#payment-element');
+
+            const form = document.getElementById('payment-form');
+            const submitButton = document.getElementById('submit-button');
+
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                submitButton.disabled = true;
+                submitButton.textContent = 'Processing...';
+
+                const {
+                    error
+                } = await stripe.confirmPayment({
+                    elements,
+                    confirmParams: {
+                        // URL để Stripe redirect người dùng về sau khi thanh toán thành công
+                        return_url: "{{ route('checkout.success') }}", // TODO: Tạo route này sau
+                    },
+                });
+
+                if (error) {
+                    const messageContainer = document.getElementById('payment-message');
+                    messageContainer.textContent = error.message;
+                    messageContainer.classList.remove('hidden');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Place Order & Pay';
+                }
+            });
+        });
+    </script>
 </x-app-layout>

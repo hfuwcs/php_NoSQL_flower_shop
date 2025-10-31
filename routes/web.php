@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -32,7 +33,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/update/{productId}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])->name('cart.remove');
+
+    //Check out (aka Thanh toán)
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware('auth');
+    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process')->middleware('auth');
 });
+
+
 
 
 //Default

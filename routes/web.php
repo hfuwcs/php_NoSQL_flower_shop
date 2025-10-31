@@ -6,6 +6,7 @@ use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,8 @@ Route::middleware('auth')->group(function () {
 //Stripe Webhook
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
 
+//Search
+Route::get('/search', [SearchController::class, 'index'])->name('search.index');
 
 //Default
 Route::get('/dashboard', function () {

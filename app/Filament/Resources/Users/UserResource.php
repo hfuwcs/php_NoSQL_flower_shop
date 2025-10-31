@@ -9,9 +9,14 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables;
 use Filament\Tables\Table;
 
 class UserResource extends Resource
@@ -24,12 +29,48 @@ class UserResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return UserForm::configure($schema);
+        return $schema
+        ->schema([
+            TextInput::make('name')
+                ->required()
+                ->maxLength(255),
+            TextInput::make('email')
+                ->email()
+                ->required()
+                ->maxLength(255),
+            TextInput::make('password')
+                ->password()
+                ->required(fn (string $context): bool => $context === 'create')
+                ->dehydrated(fn ($state) => filled($state)),
+        ]);
     }
 
     public static function table(Table $table): Table
     {
-        return UsersTable::configure($table);
+         return $table
+        ->columns([
+            Tables\Columns\TextColumn::make('_id')
+                ->label('ID')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('name')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('email')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('created_at')
+                ->dateTime()
+                ->sortable(),
+        ])
+        ->filters([
+            // todo
+        ])
+        ->recordActions([
+            EditAction::make(),
+        ])
+        ->toolbarActions([
+            BulkActionGroup::make([
+                DeleteBulkAction::make(),
+            ]),
+        ]);
     }
 
     public static function getRelations(): array

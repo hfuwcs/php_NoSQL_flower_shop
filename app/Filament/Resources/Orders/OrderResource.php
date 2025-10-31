@@ -8,13 +8,15 @@ use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\Schemas\OrderForm;
 use App\Filament\Resources\Orders\Schemas\OrderInfolist;
-use App\Filament\Resources\Orders\Tables\OrdersTable;
 use App\Models\Order;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\SelectAction;
 use Filament\Actions\ViewAction;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -33,36 +35,30 @@ class OrderResource extends Resource
     {
         return $schema
             ->schema([
-                Grid::make(3)->schema([
-                    // Cột chính
-                    Section::make('Order Details')
-                        ->schema([
-                            TextEntry::make('user.name')->label('Customer'),
-                            TextEntry::make('user.email')->label('Customer Email'),
-                            TextEntry::make('status')
-                                ->badge()
-                                ->color(fn(int $state): string => match ($state) {
-                                    1, 2 => 'danger',
-                                    3 => 'warning',
-                                    4, 5 => 'success',
-                                    default => 'gray',
-                                }),
-                            TextEntry::make('total_amount')->money('usd'),
-                            TextEntry::make('created_at')->dateTime(),
-                        ])->columnSpan(2),
-
-                    // Cột bên phải
-                    Section::make('Shipping Address')
-                        ->schema([
-                            TextEntry::make('shipping_address.name')->label('Recipient'),
-                            TextEntry::make('shipping_address.address'),
-                            TextEntry::make('shipping_address.city'),
-                            TextEntry::make('shipping_address.phone'),
-                        ])->columnSpan(1),
-                ]),
-                Section::make('Order Items')
+                Section::make('Order Details')
                     ->schema([
-                        // Todo: thêm Repeater hiển thị các item
+                        TextInput::make('user.name')
+                            ->label('Customer')
+                            ->disabled(),
+                        TextInput::make('user.email')
+                            ->label('Customer Email')
+                            ->disabled(),
+                        Select::make('status')
+                            ->label('Order Status')
+                            ->options([
+                                'pending' => 'Pending',
+                                'processing' => 'Processing',
+                                'shipped' => 'Shipped',
+                                'completed' => 'Completed',
+                                'failed' => 'Failed',
+                                'cancelled' => 'Cancelled',
+                            ])
+                            ->required()
+                            ->native(false),
+                        TextInput::make('total_amount')
+                            ->label('Total Amount')
+                            ->prefix('$')
+                            ->disabled(),
                     ]),
             ]);
     }
@@ -94,10 +90,41 @@ class OrderResource extends Resource
                     ->dateTime()
                     ->sortable(),
             ])
-            // ...
             ->recordActions([
                 ViewAction::make(),
-                //todo
+
+                Action::make('updateStatus')
+                ->label('Update Status')
+                ->icon('heroicon-o-arrow-path')
+                ->color('info')
+                ->hidden(fn (Order $record): bool => in_array($record->status, ['completed', 'cancelled', 'failed']))
+                ->schema([
+                    Select::make('status')
+                        ->label('New Status')
+                        ->options([
+                            'processing' => 'Processing',
+                            'shipped' => 'Shipped',
+                            'completed' => 'Completed',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default(fn (Order $record): string => $record->status) 
+                        ->required(),
+                ])
+                ->action(function (Order $record, array $data): void {
+                    $record->update([
+                        'status' => $data['status'],
+                    ]);
+                    
+                    Notification::make()
+                        ->title('Order status updated successfully')
+                        ->success()
+                        ->send();
+                })
+                ->modalSubmitActionLabel('Update Status')
+                ->modalWidth('md'),
+        ])
+            ->toolbarActions([
+                // ...
             ]);
     }
 

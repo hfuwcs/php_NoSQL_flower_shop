@@ -11,7 +11,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class LatestOrders extends BaseWidget
 {
     protected static ?int $sort = 2;
-
+    protected ?string $pollingInterval = '2m';
+    
     public function table(Table $table): Table
     {
         return $table

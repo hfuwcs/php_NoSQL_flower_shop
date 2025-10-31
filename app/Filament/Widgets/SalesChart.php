@@ -9,6 +9,7 @@ class SalesChart extends ChartWidget
 {
     protected ?string $heading = 'Sales Chart';
     protected static ?int $sort = 1;
+    protected ?string $pollingInterval = null;
 
     protected function getData(): array
     {

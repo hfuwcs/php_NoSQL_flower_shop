@@ -9,6 +9,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverview extends BaseWidget
 {
+    protected ?string $pollingInterval = '2m';
     protected function getStats(): array
     {
         // Thống kê Doanh thu

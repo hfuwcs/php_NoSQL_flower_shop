@@ -22,6 +22,10 @@ class ReviewController extends Controller
             'content' => $request->validated('content'),
         ]);
 
+        // Invalidate product cache để hiển thị review mới ngay lập tức
+        $productCacheKey = "product:{$product->id}";
+        Cache::forget($productCacheKey);
+
         // Dispatch the job with the Product model
         UpdateProductStatsJob::dispatch($product);
 

@@ -59,10 +59,15 @@ class SyncReviewVotesToDB extends Command
 
             Log::channel('stack')->info("Extracted Review ID: '{$reviewId}', Upvotes: {$upvotes}, Downvotes: {$downvotes}");
 
-            if ($upvotes === 0 && $downvotes === 0) {
-                 Log::channel('stack')->warning("Skipping sync for Review ID: {$reviewId} as vote counts are zero.");
-                 Redis::del($redisKeyWithPrefix);
-                 continue;
+            // Skip chỉ khi hash rỗng hoàn toàn (key không có field nào)
+            // Lưu ý: Không skip khi upvotes=0 và downvotes=0 vì:
+            // - Có thể do user vote up rồi vote down cân bằng nhau
+            // - Hoặc user vote rồi thu hồi vote
+            // - Các trường hợp này vẫn cần sync để đảm bảo consistency
+            if (empty($votes)) {
+                Log::channel('stack')->warning("Skipping sync for Review ID: {$reviewId} as vote hash is empty (no fields).");
+                Redis::del($keyWithoutPrefix);
+                continue;
             }
 
             // Kiểm tra review có tồn tại không

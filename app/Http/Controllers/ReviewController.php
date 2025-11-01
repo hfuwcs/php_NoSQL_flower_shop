@@ -46,25 +46,25 @@ class ReviewController extends Controller
 
 
         if ($currentVoteValue === $newVoteValue) {
-            // **Trường hợp 1: Thu hồi vote**
+            // 1: Thu hồi vote**
             // Xóa phiếu bầu của user
             Redis::hdel($userVotesKey, $userId);
             // Giảm số đếm tương ứng đi 1
-            Redis::hincrby($voteCountsKey, $newVoteType . 's', -1);
+            Redis::hincrby($voteCountsKey, $newVoteType . 'votes', -1);
         } elseif ($currentVoteValue !== 0) {
-            // **Trường hợp 2: Thay đổi vote (từ up sang down hoặc ngược lại)**
+            // 2: Thay đổi vote (từ up sang down hoặc ngược lại)**
             // Cập nhật phiếu bầu của user
             Redis::hset($userVotesKey, $userId, $newVoteValue);
             // Tăng số đếm mới lên 1
-            Redis::hincrby($voteCountsKey, $newVoteType . 's', 1);
+            Redis::hincrby($voteCountsKey, $newVoteType . 'votes', 1);
             // Giảm số đếm cũ đi 1
             $oldVoteType = ($currentVoteValue === 1) ? 'up' : 'down';
-            Redis::hincrby($voteCountsKey, $oldVoteType . 's', -1);
+            Redis::hincrby($voteCountsKey, $oldVoteType . 'votes', -1);
         } else {
             // **Trường hợp 3: Vote mới (chưa từng vote)**
             // Ghi lại phiếu bầu của user
             Redis::hset($userVotesKey, $userId, $newVoteValue);
-            Redis::hincrby($voteCountsKey, $newVoteType . 's', 1);
+            Redis::hincrby($voteCountsKey, $newVoteType . 'votes', 1);
         }
 
 

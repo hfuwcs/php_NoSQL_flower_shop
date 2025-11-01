@@ -53,3 +53,63 @@ class ProductController extends Controller
         return view('products.show', ['product' => $productData]);
     }
 }
+
+// <?php
+
+
+// namespace App\Http\Controllers;
+
+// use App\Models\Product;
+// use Illuminate\Http\Request;
+// use Illuminate\Support\Facades\Cache;
+
+// class ProductController extends Controller
+// {
+//     public function index(Request $request)
+//     {
+//         // Lấy các giá trị filter từ request
+//         $category = $request->input('category');
+//         $priceMin = (float) $request->input('price_min');
+//         $priceMax = (float) $request->input('price_max');
+
+//         $cacheKey = "products:list:{$category}:{$priceMin}:{$priceMax}:" . $request->input('page', 1);
+
+//         $products = Cache::remember($cacheKey, 300, function () use ($category, $priceMin, $priceMax) {
+//             $query = Product::query();
+            
+//             // Eager load nếu cần (reviews count)
+//             // $query->withCount('reviews');
+            
+//             $query->filterByCategory($category);
+//             $query->filterByPriceRange($priceMin, $priceMax);
+            
+//             return $query->paginate(12);
+//         });
+
+//         // Cache categories
+//         $categories = Cache::remember('products:categories', 3600, function () {
+//             return Product::raw(function ($collection) {
+//                 return $collection->distinct('category');
+//             });
+//         });
+
+//         return view('products.index', [
+//             'products' => $products,
+//             'categories' => collect($categories)->sort()->values(),
+//         ]);
+//     }
+
+//     public function show(Product $product)
+//     {
+//         $cacheKey = "product:{$product->id}";
+
+//         $productData = Cache::remember($cacheKey, 3600, function () use ($product) {
+//             return $product->load(['reviews' => function ($query) {
+//                 $query->latest()->limit(50); // Giới hạn số reviews load
+//             }, 'reviews.user']);
+//         });
+
+//         return view('products.show', ['product' => $productData]);
+//     }
+// }
+// ?>

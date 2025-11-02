@@ -22,15 +22,17 @@ class ReviewController extends Controller
             'content' => $request->validated('content'),
         ]);
 
-        // Invalidate product cache để hiển thị review mới ngay lập tức
-        $productCacheKey = "product:{$product->id}";
-        Cache::forget($productCacheKey);
+        // Invalidate product cache
+        Cache::forget("product:{$product->id}");
+        
+        // Clear cache list
+        Cache::tags(['products'])->flush();
 
-        // Dispatch the job with the Product model
         UpdateProductStatsJob::dispatch($product);
 
         return back()->with('success', 'Thank you for your review!');
     }
+
     public function vote(Request $request, Review $review)
     {
         $request->validate(['vote_type' => ['required', 'string', 'in:up,down']]);
@@ -42,41 +44,59 @@ class ReviewController extends Controller
         $voteCountsKey = "review:votes:{$review->id}";
         $userVotesKey = "review:user_votes:{$review->id}";
 
-        $currentVoteValue = (int) Redis::hget($userVotesKey, $userId);
+        //
+        $results = Redis::pipeline(function ($pipe) use ($userVotesKey, $userId, $voteCountsKey) {
+            $pipe->hget($userVotesKey, $userId);
+            $pipe->hmget($voteCountsKey, ['upvotes', 'downvotes']);
+        });
 
+        // Xử lý kết quả với error handling
+        $currentVoteValue = isset($results[0]) ? (int) $results[0] : 0;
+        $pendingUpvotes = isset($results[1][0]) ? $results[1][0] : null;
+        $pendingDownvotes = isset($results[1][1]) ? $results[1][1] : null;
 
-        if ($currentVoteValue === $newVoteValue) {
-            // 1: Thu hồi vote**
-            // Xóa phiếu bầu của user
-            Redis::hdel($userVotesKey, $userId);
-            // Giảm số đếm tương ứng đi 1
-            Redis::hincrby($voteCountsKey, $newVoteType . 'votes', -1);
-        } elseif ($currentVoteValue !== 0) {
-            // 2: Thay đổi vote (từ up sang down hoặc ngược lại)**
-            // Cập nhật phiếu bầu của user
-            Redis::hset($userVotesKey, $userId, $newVoteValue);
-            // Tăng số đếm mới lên 1
-            Redis::hincrby($voteCountsKey, $newVoteType . 'votes', 1);
-            // Giảm số đếm cũ đi 1
-            $oldVoteType = ($currentVoteValue === 1) ? 'up' : 'down';
-            Redis::hincrby($voteCountsKey, $oldVoteType . 'votes', -1);
-        } else {
-            // **Trường hợp 3: Vote mới (chưa từng vote)**
-            // Ghi lại phiếu bầu của user
-            Redis::hset($userVotesKey, $userId, $newVoteValue);
-            Redis::hincrby($voteCountsKey, $newVoteType . 'votes', 1);
-        }
-
+        //Xử lý logic vote
+        Redis::pipeline(function ($pipe) use ($currentVoteValue, $newVoteValue, $userVotesKey, $userId, $voteCountsKey, $newVoteType) {
+            if ($currentVoteValue === $newVoteValue) {
+                // Thu hồi vote
+                $pipe->hdel($userVotesKey, $userId);
+                $pipe->hincrby($voteCountsKey, $newVoteType . 'votes', -1);
+            } elseif ($currentVoteValue !== 0) {
+                // Thay đổi vote
+                $pipe->hset($userVotesKey, $userId, $newVoteValue);
+                $pipe->hincrby($voteCountsKey, $newVoteType . 'votes', 1);
+                $oldVoteType = ($currentVoteValue === 1) ? 'up' : 'down';
+                $pipe->hincrby($voteCountsKey, $oldVoteType . 'votes', -1);
+            } else {
+                // Vote mới
+                $pipe->hset($userVotesKey, $userId, $newVoteValue);
+                $pipe->hincrby($voteCountsKey, $newVoteType . 'votes', 1);
+            }
+        });
 
         if ($request->wantsJson()) {
-            $pendingVotes = Redis::hGetAll($voteCountsKey);
-            $totalUpvotes = $review->upvotes + (int)($pendingVotes['upvotes'] ?? 0);
-            $totalDownvotes = $review->downvotes + (int)($pendingVotes['downvotes'] ?? 0);
-            
+            // Tính toán từ kết quả đã có, không query lại
+            $deltaUp = 0;
+            $deltaDown = 0;
+
+            if ($currentVoteValue === $newVoteValue) {
+                // Thu hồi
+                $newVoteType === 'up' ? $deltaUp = -1 : $deltaDown = -1;
+            } elseif ($currentVoteValue !== 0) {
+                // Thay đổi
+                $newVoteType === 'up' ? ($deltaUp = 1) && ($deltaDown = -1) : ($deltaDown = 1) && ($deltaUp = -1);
+            } else {
+                // Mới
+                $newVoteType === 'up' ? $deltaUp = 1 : $deltaDown = 1;
+            }
+
+            $totalUpvotes = $review->upvotes + (int)($pendingUpvotes ?? 0) + $deltaUp;
+            $totalDownvotes = $review->downvotes + (int)($pendingDownvotes ?? 0) + $deltaDown;
+
             return response()->json([
                 'success' => true,
-                'upvotes' => $totalUpvotes,
-                'downvotes' => $totalDownvotes,
+                'upvotes' => max(0, $totalUpvotes),
+                'downvotes' => max(0, $totalDownvotes),
             ]);
         }
 

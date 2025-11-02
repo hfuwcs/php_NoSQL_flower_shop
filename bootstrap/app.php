@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Spatie\Csp\AddCspHeaders;
+use App\Http\Middleware\AddServerTimingHeader;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Thêm Server Timing vào tất cả requests
+        $middleware->append(AddServerTimingHeader::class);
+        
         $middleware->web(append: [
             AddCspHeaders::class,
         ]);

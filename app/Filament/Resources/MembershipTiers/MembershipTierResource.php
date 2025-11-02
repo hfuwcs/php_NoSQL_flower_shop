@@ -1,32 +1,32 @@
 <?php
 
-namespace App\Filament\Resources\Users;
+namespace App\Filament\Resources\MembershipTiers;
 
-use App\Filament\Resources\Users\Pages\CreateUser;
-use App\Filament\Resources\Users\Pages\EditUser;
-use App\Filament\Resources\Users\Pages\ListUsers;
-use App\Filament\Resources\Users\Schemas\UserForm;
-use App\Filament\Resources\Users\Tables\UsersTable;
-use App\Models\User;
+use App\Filament\Resources\MembershipTiers\Pages\CreateMembershipTier;
+use App\Filament\Resources\MembershipTiers\Pages\EditMembershipTier;
+use App\Filament\Resources\MembershipTiers\Pages\ListMembershipTiers;
+use App\Filament\Resources\MembershipTiers\Schemas\MembershipTierForm;
+use App\Filament\Resources\MembershipTiers\Tables\MembershipTiersTable;
+use App\Models\MembershipTier;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class UserResource extends Resource
+class MembershipTierResource extends Resource
 {
-    protected static ?string $model = User::class;
+    protected static ?string $model = MembershipTier::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'Users';
+    protected static ?string $recordTitleAttribute = 'Membership Tier';
 
     public static function form(Schema $schema): Schema
     {
@@ -35,14 +35,13 @@ class UserResource extends Resource
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('email')
-                    ->email()
+                TextInput::make('min_points')
                     ->required()
-                    ->maxLength(255),
-                TextInput::make('password')
-                    ->password()
-                    ->required(fn(string $context): bool => $context === 'create')
-                    ->dehydrated(fn($state) => filled($state)),
+                    ->numeric()
+                    ->label('Minimum Points'),
+                Textarea::make('benefits')
+                    ->columnSpanFull()
+                    ->helperText('Enter each benefit on a new line.'),
             ]);
     }
 
@@ -50,27 +49,19 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('_id')
-                    ->label('ID')
-                    ->searchable(),
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('email')
-                    ->searchable(),
-                TextColumn::make('points_total')
+                TextColumn::make('min_points')
                     ->numeric()
                     ->sortable()
-                    ->label('Total Points'),
-                TextColumn::make('membership.name')
-                    ->label('Membership Tier')
-                    ->badge()
-                    ->color('success'),
+                    ->label('Minimum Points'),
                 TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                // todo
+                //
             ])
             ->recordActions([
                 EditAction::make(),
@@ -79,7 +70,8 @@ class UserResource extends Resource
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('min_points', 'asc');
     }
 
     public static function getRelations(): array
@@ -92,9 +84,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListUsers::route('/'),
-            'create' => CreateUser::route('/create'),
-            'edit' => EditUser::route('/{record}/edit'),
+            'index' => ListMembershipTiers::route('/'),
+            'create' => CreateMembershipTier::route('/create'),
+            'edit' => EditMembershipTier::route('/{record}/edit'),
         ];
     }
 }

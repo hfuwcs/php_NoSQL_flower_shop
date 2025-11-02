@@ -14,7 +14,7 @@ class StatsOverview extends BaseWidget
     {
         // Thống kê Doanh thu
         // Chỉ tính tổng tiền của các đơn hàng đã hoàn thành
-        $totalRevenue = Order::where('status', 'completed')->sum('total_amount');
+        $totalRevenue = (float)(string) Order::where('status', 'completed')->sum('total_amount');
 
         // Thống kê Đơn hàng mới
         // Đếm số đơn hàng được tạo trong 7 ngày qua

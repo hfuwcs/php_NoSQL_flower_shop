@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Services\CartService;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
@@ -13,11 +15,10 @@ class CartController extends Controller
 
     public function index(Request $request)
     {
-        $cartData = $this->cartService->getCartContent($request->user());
+        $cartContent = $this->cartService->getCartContent($request->user());
 
         return view('cart.index', [
-            'cartItems' => $cartData['items'],
-            'cartTotal' => $cartData['total'],
+            'cart' => $cartContent
         ]);
     }
 
@@ -53,4 +54,31 @@ class CartController extends Controller
 
         return back()->with('success', 'Item removed from cart!');
     }
+
+    public function applyCoupon(Request $request)
+    {
+        // 1. Validate input
+        $validated = $request->validate([
+            'coupon_code' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $this->cartService->applyCoupon(Auth::user(), $validated['coupon_code']);
+            
+            $updatedCartContent = $this->cartService->getCartContent(Auth::user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Coupon applied successfully!',
+                'cart' => $updatedCartContent,
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422); 
+        }
+    }
+
 }

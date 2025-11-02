@@ -15,10 +15,12 @@ class Cart extends Model
     protected $fillable = [
         'user_id',
         'items',
+        'applied_coupon',
     ];
 
     protected $casts = [
         'items' => 'array',
+        'applied_coupon'=>'array',
     ];
 
     public function user()

@@ -29,12 +29,16 @@ Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])
 //Leader board
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 
-//Cart
+//Auth
 Route::middleware('auth')->group(function () {
+
+    //Cart
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/update/{productId}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.applyCoupon');
+    
 
     //Check out (aka Thanh toán)
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware('auth');

@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\User;
+use Exception;
 
 class CartService
 {
@@ -25,7 +27,7 @@ class CartService
 
         // Lấy mảng 'items' hiện tại từ giỏ hàng.
         $items = $cart->items ?? [];
-        
+
         $productIndex = -1;
         // Tìm kiếm xem sản phẩm đã có trong mảng 'items' chưa.
         foreach ($items as $index => $item) {
@@ -65,23 +67,46 @@ class CartService
     {
         $cart = Cart::where('user_id', $user->id)->first();
 
+        $defaultResponse = [
+            'items' => [],
+            'subtotal' => 0,
+            'applied_coupon' => null,
+            'discount_amount' => 0,
+            'final_total' => 0,
+        ];
+
         if (!$cart || empty($cart->items)) {
-            return [
-                'items' => [],
-                'total' => 0,
-            ];
+            return $defaultResponse;
         }
 
         $items = $cart->items;
-        $total = 0;
+        $subtotal = 0;
 
         foreach ($items as $item) {
-            $total += $item['price'] * $item['quantity'];
+            $price = is_numeric($item['price']) ? (float) $item['price'] : 0;
+            $quantity = is_numeric($item['quantity']) ? (int) $item['quantity'] : 0;
+            $subtotal += $price * $quantity;
         }
+
+        $appliedCoupon = $cart->applied_coupon;
+        $discountAmount = 0;
+
+        if ($appliedCoupon) {
+            if ($appliedCoupon['type'] === 'percent') {
+                $discountAmount = ($subtotal * $appliedCoupon['value']) / 100;
+            } elseif ($appliedCoupon['type'] === 'fixed') {
+                $discountAmount = $appliedCoupon['value'];
+            }
+        }
+
+        $finalTotal = max(0, $subtotal - $discountAmount);
 
         return [
             'items' => $items,
-            'total' => $total,
+            'subtotal' => round($subtotal, 2),
+            'applied_coupon' => $appliedCoupon,
+            'discount_amount' => round($discountAmount, 2),
+            'final_total' => round($finalTotal, 2),
         ];
     }
 
@@ -149,6 +174,41 @@ class CartService
         });
 
         $cart->items = array_values($newItems);
+        $cart->save();
+
+        return $cart;
+    }
+
+    /**
+     * Áp dụng một mã giảm giá vào giỏ hàng của người dùng.
+     *
+     * @param User $user
+     * @param string $couponCode
+     * @return Cart
+     * @throws Exception
+     */
+    public function applyCoupon(User $user, string $couponCode): Cart
+    {
+        $cart = Cart::where('user_id', $user->id)->first();
+        if (!$cart || empty($cart->items)) {
+            throw new Exception('Cannot apply coupon to an empty cart.');
+        }
+
+        $coupon = Coupon::where('code', $couponCode)->first();
+        if (!$coupon) {
+            throw new Exception('Coupon code is invalid.');
+        }
+
+        if (!$coupon->isValid()) {
+            throw new Exception('This coupon is expired or has reached its usage limit.');
+        }
+
+        $cart->applied_coupon = [
+            'code' => $coupon->code,
+            'type' => $coupon->type,
+            'value' => $coupon->value,
+        ];
+
         $cart->save();
 
         return $cart;

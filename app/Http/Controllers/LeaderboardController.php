@@ -27,8 +27,6 @@ class LeaderboardController extends Controller
             //whereIn
             $products = Product::whereIn('_id', $topProductIds)->get();
 
-            //Sắp xếp lại kết quả từ MongoDB theo đúng thứ tự từ Redis.
-            // Vì whereIn không đảm bảo thứ tự.
             $topProducts = $products->sortBy(function ($product) use ($topProductIds) {
                 return array_search($product->id, $topProductIds);
             });

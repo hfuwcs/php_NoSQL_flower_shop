@@ -55,9 +55,10 @@ class UpdateProductStatsJob implements ShouldQueue
 
             // CẬP NHẬT BẢNG XẾP HẠNG REDIS
             $leaderboardKey = 'leaderboard:products:top_rated';
-            $productId = $this->product->id;
-            $newAverageRating = $stats->average_rating;
+            $productId = (string) $this->product->id;
+            $newAverageRating = (float) ($stats->average_rating ?? 0);
 
+            // Cú pháp đúng: zadd($key, $score, $member)
             Redis::zadd($leaderboardKey, $newAverageRating, $productId);
             Log::channel('stack')->info("Updated leaderboard '{$leaderboardKey}' for Product ID: {$productId} with new score: {$newAverageRating}");
 

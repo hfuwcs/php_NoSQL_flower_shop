@@ -26,9 +26,9 @@ class OrderService
     {
         //TRANSACTION: DB::transaction
         return DB::transaction(function () use ($user, $shippingDetails) {
-            $cartData = $this->cartService->getCartContent($user);
+            $cartContent = $this->cartService->getCartContent($user);
 
-            if (empty($cartData['items'])) {
+            if (empty($cartContent['items'])) {
                 throw new \Exception('Cannot create order from an empty cart.');
             }
 
@@ -36,12 +36,12 @@ class OrderService
             $order = Order::create([
                 'user_id' => $user->id,
                 'status' => 'pending', //default
-                'total_amount' => $cartData['total'],
+                'total_amount' => $cartContent['final_total'],
                 'shipping_address' => $shippingDetails,
             ]);
 
             $orderItemsData = [];
-            foreach ($cartData['items'] as $cartItem) {
+            foreach ($cartContent['items'] as $cartItem) {
                 $orderItemsData[] = [
                     'order_id' => $order->id,
                     'product_id' => $cartItem['product_id'],
@@ -72,22 +72,22 @@ class OrderService
             return $existingPendingOrder;
         }
 
-        $cartData = $this->cartService->getCartContent($user);
-        //dd($cartData);
-        if (empty($cartData['items'])) {
+        $cartContent = $this->cartService->getCartContent($user);
+        //dd($cartContent);
+        if (empty($cartContent['items'])) {
             return null;
         }
 
-        return DB::transaction(function () use ($user, $cartData) {
+        return DB::transaction(function () use ($user, $cartContent) {
             $order = Order::create([
                 'user_id' => $user->id,
                 'status' => 'pending',
-                'total_amount' => $cartData['total'],
-                'shipping_address' => [], // TODO: Update shipping adress
+                'total_amount' => $cartContent['final_total'],
+                'shipping_address' => [],
             ]);
 
             $orderItemsData = [];
-            foreach ($cartData['items'] as $cartItem) {
+            foreach ($cartContent['items'] as $cartItem) {
                 //TODO: Update các field khác
                 $orderItemsData[] = [ 'order_id' => $order->id, /* ... các trường khác ... */ ];
             }

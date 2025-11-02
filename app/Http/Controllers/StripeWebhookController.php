@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Stripe;
@@ -12,8 +13,10 @@ use UnexpectedValueException;
 
 class StripeWebhookController extends Controller
 {
+    public function __construct(protected PointService $pointService) {}
     public function handleWebhook(Request $request)
     {
+        #region verify Webhook
         $endpoint_secret = config('stripe.webhook_secret');
         $payload = $request->getContent();
         $sig_header = $request->server('HTTP_STRIPE_SIGNATURE');
@@ -28,7 +31,9 @@ class StripeWebhookController extends Controller
         try {
             // Verify Signature từ Stripe
             $event = Webhook::constructEvent(
-                $payload, $sig_header, $endpoint_secret
+                $payload,
+                $sig_header,
+                $endpoint_secret
             );
         } catch (UnexpectedValueException $e) {
             // Invalid payload
@@ -39,44 +44,59 @@ class StripeWebhookController extends Controller
             Log::error('Webhook signature error: ' . $e->getMessage());
             return response()->json(['error' => 'Invalid signature', 'message' => $e->getMessage()], 400);
         }
+        #endregion
 
         switch ($event->type) {
             case 'payment_intent.succeeded':
-                $paymentIntent = $event->data->object; // Get  payment intent object
-                
-                $orderId = $paymentIntent->metadata->order_id;
-                
-                $order = Order::find($orderId);
-                
+                $paymentIntent = $event->data->object;
+
+                $orderId = $paymentIntent->metadata->order_id ?? null;
+                if (!$orderId) {
+                    Log::error('Webhook payment_intent.succeeded missing order_id in metadata.', ['payment_intent_id' => $paymentIntent->id]);
+                    break;
+                }
+
+                $order = Order::with('user')->find($orderId);
+
                 if ($order && $order->status === 'pending') {
-                    // Update order status
+                    // Cập nhật trạng thái đơn hàng
                     $order->status = 'processing';
-                    // Lưu thông tin thanh toán
                     $order->payment_details = [
                         'payment_intent_id' => $paymentIntent->id,
                         'payment_method' => $paymentIntent->payment_method,
                     ];
                     $order->save();
-                    
+
+
+                    if ($order->user) {
+                        $this->pointService->addPointsForAction(
+                            $order->user,
+                            'order_completed',
+                            $order
+                        );
+                    } else {
+                        Log::info('Order completed but no user associated for awarding points.', ['order_id' => $order->id]);
+                    }
+
                     // TODO: Dispatch các job khác (gửi email, cập nhật kho, etc.)
                     // SendOrderConfirmationEmailJob::dispatch($order);
                 }
                 break;
-            
+
             case 'payment_intent.payment_failed':
                 $paymentIntent = $event->data->object;
                 $orderId = $paymentIntent->metadata->order_id;
                 $order = Order::find($orderId);
-                
+
                 if ($order && $order->status === 'pending') {
                     $order->status = 'failed';
                     $order->save();
                     // TODO: Gửi email thông báo cho khách hàng
                 }
                 break;
-            
+
             // ... xử lý các loại sự kiện khác nếu muôna
-            
+
             default:
         }
 

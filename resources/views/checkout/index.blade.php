@@ -74,7 +74,10 @@
     </div>
 
     {{-- Script --}}
-    <script src="https://js.stripe.com/v3/"></script>
+    @pushOnce('scripts')
+        <script src="https://js.stripe.com/v3/"></script>
+    @endPushOnce
+    @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const stripe = Stripe("{{ $stripeKey }}");
@@ -141,4 +144,5 @@
             });
         });
     </script>
+    @endpush
 </x-app-layout>

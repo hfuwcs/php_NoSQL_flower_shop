@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\PointTransaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,8 +17,13 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $pointHistory = PointTransaction::where('user_id', $request->user()->id)
+            ->latest() // Tương đương orderBy('created_at', 'desc')
+            ->paginate(10);
+
         return view('profile.edit', [
             'user' => $request->user(),
+            'pointHistory' => $pointHistory,
         ]);
     }
 

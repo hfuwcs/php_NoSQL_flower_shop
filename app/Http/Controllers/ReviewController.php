@@ -6,6 +6,7 @@ use App\Http\Requests\StoreReviewRequest;
 use App\Models\Product;
 use App\Models\Review;
 use App\Jobs\UpdateProductStatsJob;
+use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -14,14 +15,18 @@ use Illuminate\Support\Facades\Log;
 
 class ReviewController extends Controller
 {
+    public function __construct(protected PointService $pointService)
+    {
+    }
     public function store(StoreReviewRequest $request, Product $product)
     {
-        $product->reviews()->create([
+        $review = $product->reviews()->create([
             'user_id' => Auth::id(),
             'rating' => $request->validated('rating'),
             'title' => $request->validated('title'),
             'content' => $request->validated('content'),
         ]);
+
 
         Cache::forget("product:{$product->id}");
         Cache::forget("product:basic:{$product->id}");
@@ -29,6 +34,13 @@ class ReviewController extends Controller
         Cache::tags(['products'])->flush();
 
         UpdateProductStatsJob::dispatch($product);
+
+        //Cộng điểm
+        $this->pointService->addPointsForAction(
+            $request->user(),
+            'review_created',
+            $review
+        );
 
         return back()->with('success', 'Thank you for your review!');
     }

@@ -53,17 +53,13 @@ class SyncReviewVotesToDB extends Command
             $votes = Redis::hGetAll($keyWithoutPrefix);
             
             $reviewId = str_replace('review:votes:', '', $keyWithoutPrefix);
-            
+            $userVotesKeyWithoutPrefix = "review:user_votes:{$reviewId}";
+
             $upvotes = (int) ($votes['upvotes'] ?? 0);
             $downvotes = (int) ($votes['downvotes'] ?? 0);
 
             Log::channel('stack')->info("Extracted Review ID: '{$reviewId}', Upvotes: {$upvotes}, Downvotes: {$downvotes}");
 
-            // Skip chỉ khi hash rỗng hoàn toàn (key không có field nào)
-            // Lưu ý: Không skip khi upvotes=0 và downvotes=0 vì:
-            // - Có thể do user vote up rồi vote down cân bằng nhau
-            // - Hoặc user vote rồi thu hồi vote
-            // - Các trường hợp này vẫn cần sync để đảm bảo consistency
             if (empty($votes)) {
                 Log::channel('stack')->warning("Skipping sync for Review ID: {$reviewId} as vote hash is empty (no fields).");
                 Redis::del($keyWithoutPrefix);
@@ -88,6 +84,11 @@ class SyncReviewVotesToDB extends Command
                 Redis::del($keyWithoutPrefix);
                 Log::channel('stack')->info("Successfully synced and deleted Redis key: {$redisKeyWithPrefix}");
                 Log::channel('stack')->info("Updated Review ID: {$reviewId} - New upvotes: {$review->upvotes}, New downvotes: {$review->downvotes}");
+
+                // if (Redis::exists($userVotesKeyWithoutPrefix)) {
+                //     Redis::del($userVotesKeyWithoutPrefix);
+                //     Log::channel('stack')->info("Cleaned up user votes key for Review ID: {$reviewId}");
+                // }
             } else {
                 Log::channel('stack')->error("FAILED to find document in MongoDB for Review ID: {$reviewId}. Verify the ID exists in the 'reviews' collection.");
             }

@@ -16,11 +16,19 @@ class Cart extends Model
         'user_id',
         'items',
         'applied_coupon',
+        'points_total',
+        'membership',
+    ];
+    protected $attributes = [
+        'points_total' => 0,
+        'membership' => null,
     ];
 
     protected $casts = [
         'items' => 'array',
-        'applied_coupon'=>'array',
+        'applied_coupon' => 'array',
+        'points_total' => 'integer',
+        'membership' => 'array',
     ];
 
     public function user()

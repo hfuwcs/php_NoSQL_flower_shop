@@ -93,27 +93,21 @@
 
     @push('scripts')
     <script>
-        // Đợi cho toàn bộ trang được tải xong
         document.addEventListener('DOMContentLoaded', function() {
             const couponForm = document.getElementById('coupon-form');
             const couponCodeInput = document.getElementById('coupon-code');
             const statusMessage = document.getElementById('coupon-status-message');
 
-            // Lắng nghe sự kiện submit của form coupon
             couponForm.addEventListener('submit', async function(event) {
-                // Ngăn chặn hành vi submit form mặc định (tải lại trang)
                 event.preventDefault();
 
                 const couponCode = couponCodeInput.value;
-                // Lấy CSRF token từ thẻ meta trong layout chính (thường có sẵn trong Laravel)
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                // Xóa thông báo cũ
                 statusMessage.innerHTML = '';
                 statusMessage.classList.remove('text-red-500', 'text-green-500');
 
                 try {
-                    // Gửi request đến server bằng Fetch API
                     const response = await fetch('{{ route("cart.applyCoupon") }}', {
                         method: 'POST',
                         headers: {
@@ -129,25 +123,21 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                        // Xử lý khi thành công
                         statusMessage.textContent = data.message;
                         statusMessage.classList.add('text-green-500');
                         updateCartTotals(data.cart);
                     } else {
-                        // Xử lý khi có lỗi từ server (ví dụ: coupon không hợp lệ)
                         statusMessage.textContent = data.message;
                         statusMessage.classList.add('text-red-500');
                     }
 
                 } catch (error) {
-                    // Xử lý khi có lỗi mạng
                     statusMessage.textContent = 'An unexpected error occurred. Please try again.';
                     statusMessage.classList.add('text-red-500');
                     console.error('Error applying coupon:', error);
                 }
             });
 
-            // Hàm helper để cập nhật các giá trị trên giao diện
             function updateCartTotals(cart) {
                 document.getElementById('cart-subtotal').innerText = '$' + parseFloat(cart.subtotal).toFixed(2);
                 document.getElementById('cart-final-total').innerText = '$' + parseFloat(cart.final_total).toFixed(2);

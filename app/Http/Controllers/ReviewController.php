@@ -23,15 +23,21 @@ class ReviewController extends Controller
             'content' => $request->validated('content'),
         ]);
 
-        // Invalidate product cache
         Cache::forget("product:{$product->id}");
-        
-        // Clear cache list
+        Cache::forget("product:basic:{$product->id}");
+        $this->clearReviewsCache($product->id);
         Cache::tags(['products'])->flush();
 
         UpdateProductStatsJob::dispatch($product);
 
         return back()->with('success', 'Thank you for your review!');
+    }
+
+    private function clearReviewsCache($productId)
+    {
+        for ($page = 1; $page <= 10; $page++) {
+            Cache::forget("product:{$productId}:reviews:page:{$page}");
+        }
     }
 
     public function vote(Request $request, Review $review)
@@ -100,7 +106,8 @@ class ReviewController extends Controller
             $totalUpvotes = $review->upvotes + (int)($pendingUpvotes ?? 0) + $deltaUp;
             $totalDownvotes = $review->downvotes + (int)($pendingDownvotes ?? 0) + $deltaDown;
 
-            // Log timing
+            $this->clearReviewsCache($review->product_id);
+
             $totalTime = (microtime(true) - $startTime) * 1000;
             Log::info('Vote Performance', [
                 'review_id' => $review->id,

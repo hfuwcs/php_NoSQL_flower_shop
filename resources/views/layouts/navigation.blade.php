@@ -59,6 +59,9 @@
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
                         </x-dropdown-link>
+                        <x-dropdown-link :href="route('orders.history')">
+                            {{ __('My Orders') }}
+                        </x-dropdown-link>
                         <x-dropdown-link :href="route('rewards.my')">
                             {{ __('My Rewards') }}
                         </x-dropdown-link>

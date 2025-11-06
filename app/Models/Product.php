@@ -17,10 +17,15 @@ class Product extends Model
         'name',
         'description',
         'category',
+        'stock_quantity',
         'images',
         'average_rating',
         'review_count',
         'price',
+    ];
+
+    protected $attributes = [
+        'stock_quantity' => 0,
     ];
 
     protected function casts(): array
@@ -30,6 +35,7 @@ class Product extends Model
             'average_rating' => 'double',
             'review_count' => 'integer',
             'price' => 'decimal:2',
+            'stock_quantity' => 'integer',
         ];
     }
 
@@ -41,6 +47,16 @@ class Product extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Helper method to check if the product is in stock.
+     *
+     * @return bool
+     */
+    public function inStock(): bool
+    {
+        return $this->stock_quantity > 0;
     }
 
      /**

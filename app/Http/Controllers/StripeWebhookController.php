@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Product;
 use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -67,6 +68,7 @@ class StripeWebhookController extends Controller
                     ];
                     $order->save();
 
+                    $this->deductStockForOrder($order);
 
                     if ($order->user) {
                         $this->pointService->addPointsForAction(
@@ -102,5 +104,34 @@ class StripeWebhookController extends Controller
 
         //Trả về response 200 để báo cho Stripee
         return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Trừ kho cho các sản phẩm trong một đơn hàng đã được xác nhận thanh toán.
+     *
+     * @param Order $order
+     * @return void
+     */
+    private function deductStockForOrder(Order $order): void
+    {
+        $order->loadMissing('items');
+
+        foreach ($order->items as $item) {
+
+            $updatedCount = Product::where('_id', $item->product_id)
+                ->where('stock_quantity', '>=', $item->quantity)
+                ->decrement('stock_quantity', $item->quantity);
+
+            if ($updatedCount === 0) {
+                Log::critical('OVERSALE DETECTED!', [
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'quantity_ordered' => $item->quantity,
+                ]);
+
+                // TODO: Trong tương lai, có thể tự động hoàn tiền và thông báo cho khách hàng.
+                // For now, logging is the most critical action.
+            }
+        }
     }
 }

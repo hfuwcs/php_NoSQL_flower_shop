@@ -45,6 +45,11 @@ class ProductResource extends Resource
                     ->required()
                     ->numeric()
                     ->prefix('$'),
+                TextInput::make('stock_quantity')
+                    ->numeric()
+                    ->required()
+                    ->default(0)
+                    ->label('Stock Quantity'),
                 Repeater::make('images')
                     ->simple(
                         TextInput::make('image')
@@ -64,7 +69,7 @@ class ProductResource extends Resource
             ->columns([
                 ImageColumn::make('images')
                     ->label('Image')
-                    ->getStateUsing(fn ($record) => $record->images[0] ?? null)
+                    ->getStateUsing(fn($record) => $record->images[0] ?? null)
                     ->defaultImageUrl(url('/images/placeholder.png')),
                 TextColumn::make('name')
                     ->searchable(),
@@ -73,6 +78,10 @@ class ProductResource extends Resource
                 TextColumn::make('price')
                     ->money('usd')
                     ->sortable(),
+                TextColumn::make('stock_quantity')
+                    ->numeric()
+                    ->sortable()
+                    ->label('Stock'),
                 TextColumn::make('review_count')
                     ->label('Reviews')
                     ->sortable(),

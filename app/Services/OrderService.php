@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function __construct(protected CartService $cartService)
-    {
-    }
+    public function __construct(protected CartService $cartService) {}
 
     /**
      * Tạo một đơn hàng từ giỏ hàng hiện tại của người dùng.
@@ -89,7 +87,16 @@ class OrderService
             $orderItemsData = [];
             foreach ($cartContent['items'] as $cartItem) {
                 //TODO: Update các field khác
-                $orderItemsData[] = [ 'order_id' => $order->id, /* ... các trường khác ... */ ];
+                $orderItemsData[] = [
+                    'order_id' => $order->id,
+                    'product_id' => $cartItem['product_id'],
+                    'quantity' => $cartItem['quantity'],
+                    'price_at_purchase' => $cartItem['price'],
+                    'product_name' => $cartItem['product_name'],
+                    'delivery_status' => 'processing',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
             OrderItem::insert($orderItemsData);
 

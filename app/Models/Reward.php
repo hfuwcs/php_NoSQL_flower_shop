@@ -23,7 +23,7 @@ class Reward extends Model
 
     protected $casts = [
         'point_cost' => 'integer',
-        // 'reward_details' => 'array',
+        // 'reward_details' => 'array', DO NOT FUCKING CAST THIS SUBDOCUMENT YOU MOTHERFUCK
         'is_active' => 'boolean',
     ];
 }

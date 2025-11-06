@@ -97,6 +97,7 @@ class RewardController extends Controller
                         'coupon_code' => $newCouponCode,
                     ],
                 ]);
+                $this->processRewardByType($lockedUser, $reward);
             });
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while redeeming the reward: ' . $e->getMessage());
@@ -118,6 +119,63 @@ class RewardController extends Controller
         return view('rewards.my-rewards', [
             'userRewards' => $userRewards,
         ]);
+    }
+
+    /**
+     * Phân luồng xử lý dựa trên loại phần thưởng.
+     */
+    protected function processRewardByType(User $user, Reward $reward): void
+    {
+        match ($reward->type) {
+            'coupon', 'free_shipping' => $this->processCouponReward($user, $reward),
+            'physical_gift' => $this->processPhysicalGiftReward($user, $reward),
+            default => throw new \Exception("Unsupported reward type: {$reward->type}"),
+        };
+    }
+
+    /**
+     * Xử lý phần thưởng loại Coupon và Free Shipping.
+     */
+    protected function processCouponReward(User $user, Reward $reward): void
+    {
+        $newCouponCode = $this->generateUniqueCouponForReward($user, $reward);
+        
+        Coupon::create([
+            'code' => $newCouponCode,
+            'type' => $reward->reward_details['type'], // 'percent', 'fixed', 'free_shipping'
+            'value' => $reward->reward_details['value'] ?? null, // Free ship có thể không có value
+            'usage_limit' => 1,
+            'expires_at' => now()->addDays(30),
+        ]);
+        
+        UserReward::create([
+            'user_id' => $user->id,
+            'reward_id' => $reward->id,
+            'status' => 'claimed',
+            'reward_data' => ['coupon_code' => $newCouponCode],
+        ]);
+    }
+
+    /**
+     * Xử lý phần thưởng quà tặng vật lý.
+     */
+    protected function processPhysicalGiftReward(User $user, Reward $reward): void
+    {
+        UserReward::create([
+            'user_id' => $user->id,
+            'reward_id' => $reward->id,
+            'status' => 'claimed', // Admin sẽ đổi thành 'processed' sau khi xử lý
+            'reward_data' => [
+                'product_sku' => $reward->reward_details['product_sku'] ?? 'N/A',
+            ],
+        ]);
+
+        // Gửi thông báo cho admin (todo)
+        // Cần tạo User admin và Notification này
+        // $admin = User::where('is_admin', true)->first();
+        // if ($admin) {
+        //     Notification::send($admin, new AdminGiftRedeemed($user, $reward));
+        // }
     }
 
     /**

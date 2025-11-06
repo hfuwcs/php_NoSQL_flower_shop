@@ -1,66 +1,116 @@
 <?php
 
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\LeaderboardController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\SearchController;
-use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\{
+    CartController,
+    CheckoutController,
+    LeaderboardController,
+    OrderHistoryController,
+    OrderItemController,
+    ProductController,
+    ProfileController,
+    ReviewController,
+    SearchController,
+    StripeWebhookController
+};
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+
 Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])
-    ->middleware('auth', 'throttle:3,10') //3 request trong 10 phút
+    ->middleware(['auth', 'throttle:3,10']) // 3 request / 10 phút
     ->name('reviews.store');
 
-//Reviews
-
-# Downvote
 Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])
     ->middleware('auth')
     ->name('reviews.vote');
-//Leader board
+
+// Leaderboard
 Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard.index');
 
-//Auth
-Route::middleware('auth')->group(function () {
-
-    //Cart
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
-    Route::patch('/cart/update/{productId}', [CartController::class, 'update'])->name('cart.update');
-    Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])->name('cart.remove');
-    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.applyCoupon');
-    
-
-    //Check out (aka Thanh toán)
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware('auth');
-    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process')->middleware('auth');
-    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success')->middleware('auth');
-});
-
-//Stripe Webhook
-Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('stripe.webhook');
-
-//Search
+// Search
 Route::get('/search', [SearchController::class, 'index'])->name('search.index');
 
-//Default
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Stripe Webhook
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])
+    ->name('stripe.webhook');
 
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    /*
+    |----------------------------------------------------------------------
+    | Cart
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('cart')->name('cart.')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::post('/add/{product}', [CartController::class, 'add'])->name('add');
+        Route::patch('/update/{productId}', [CartController::class, 'update'])->name('update');
+        Route::delete('/remove/{productId}', [CartController::class, 'remove'])->name('remove');
+        Route::post('/coupon', [CartController::class, 'applyCoupon'])->name('applyCoupon');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Checkout (Thanh toán)
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/', [CheckoutController::class, 'index'])->name('index');
+        Route::post('/', [CheckoutController::class, 'process'])->name('process');
+        Route::get('/success', [CheckoutController::class, 'success'])->name('success');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Orders
+    |----------------------------------------------------------------------
+    */
+    Route::get('/my-orders', [OrderHistoryController::class, 'index'])->name('orders.history');
+    Route::post('/order-items/{orderItem}/confirm-delivery', [OrderItemController::class, 'confirmDelivery'])
+        ->name('order-item.confirm-delivery');
+
+    /*
+    |----------------------------------------------------------------------
+    | Reviews
+    |----------------------------------------------------------------------
+    */
+    Route::get('/reviews/create/{orderItem}', [ReviewController::class, 'create'])->name('reviews.create');
+
+    /*
+    |----------------------------------------------------------------------
+    | Profile
+    |----------------------------------------------------------------------
+    */
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+        Route::patch('/', [ProfileController::class, 'update'])->name('update');
+        Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy');
+    });
 });
 
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
+Route::get('/dashboard', fn() => view('dashboard'))
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| Auth Scaffolding
+|--------------------------------------------------------------------------
+*/
 require __DIR__ . '/auth.php';

@@ -73,7 +73,6 @@ class ReviewController extends Controller
         });
         $redisReadTime = (microtime(true) - $redisReadStart) * 1000;
 
-        // Xử lý kết quả với error handling
         $currentVoteValue = isset($results[0]) ? (int) $results[0] : 0;
         $pendingUpvotes = isset($results[1][0]) ? $results[1][0] : null;
         $pendingDownvotes = isset($results[1][1]) ? $results[1][1] : null;
@@ -100,7 +99,6 @@ class ReviewController extends Controller
         $redisWriteTime = (microtime(true) - $redisWriteStart) * 1000;
 
         if ($request->wantsJson()) {
-            // Tính toán từ kết quả đã có, không query lại
             $deltaUp = 0;
             $deltaDown = 0;
 

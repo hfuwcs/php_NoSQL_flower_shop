@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:sync-review-votes-to-db')->everyFiveMinutes();
+Schedule::command('app:auto-close-review-windows')->daily();

@@ -20,7 +20,7 @@ class OrderItem extends Model
         'product_name',
         'delivery_status',
         'delivered_at',
-        'can_review_after',
+        'review_deadline_at',
         'review_id',
     ];
 
@@ -33,7 +33,7 @@ class OrderItem extends Model
         'price_at_purchase' => 'decimal:2',
         'quantity' => 'integer',
         'delivered_at' => 'datetime',
-        'can_review_after' => 'datetime',
+        'review_deadline_at' => 'datetime',
     ];
 
     /**

@@ -10,6 +10,7 @@ use App\Http\Controllers\{
     ProductController,
     ProfileController,
     ReviewController,
+    RewardController,
     SearchController,
     StripeWebhookController
 };
@@ -19,6 +20,7 @@ use App\Http\Controllers\{
 | Public Routes
 |--------------------------------------------------------------------------
 */
+
 Route::get('/', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
@@ -86,6 +88,15 @@ Route::middleware('auth')->group(function () {
     |----------------------------------------------------------------------
     */
     Route::get('/reviews/create/{orderItem}', [ReviewController::class, 'create'])->name('reviews.create');
+
+    /*
+    |----------------------------------------------------------------------
+    | Reviews
+    |----------------------------------------------------------------------
+    */
+    Route::get('/rewards', [RewardController::class, 'index'])->name('rewards.index');
+    Route::post('/rewards/{reward}/redeem', [RewardController::class, 'redeem'])->name('rewards.redeem');
+    Route::get('/my-rewards', [RewardController::class, 'myRewards'])->name('rewards.my');
 
     /*
     |----------------------------------------------------------------------

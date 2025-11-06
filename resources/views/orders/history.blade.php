@@ -45,15 +45,15 @@
                                         </form>
                                         @elseif ($item->delivery_status === 'delivered')
                                         @if (is_null($item->review_id))
-                                        @if (now()->gte($item->can_review_after))
-                                        {{-- Đủ điều kiện: Đã nhận, chưa review, đã qua 7 ngày --}}
+                                        @if (now()->lte($item->review_deadline_at))
+                                        {{-- Đủ điều kiện: Đã nhận, chưa review, VÀ CÒN HẠN --}}
                                         <a href="{{ route('reviews.create', ['orderItem' => $item->id]) }}" class="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                                             Write a Review
                                         </a>
                                         @else
-                                        {{-- Đã nhận, chưa review, nhưng chưa đủ 7 ngày --}}
-                                        <span class="px-3 py-1 text-sm text-gray-700 bg-gray-200 rounded-md cursor-not-allowed" title="You can review this item after {{ $item->can_review_after->format('d/m/Y') }}">
-                                            Review available soon
+                                        {{-- Đã nhận, chưa review, NHƯNG HẾT HẠN --}}
+                                        <span class="px-3 py-1 text-sm text-gray-700 bg-gray-200 rounded-md cursor-not-allowed" title="The review period for this item has expired.">
+                                            Review Period Ended
                                         </span>
                                         @endif
                                         @else
@@ -61,9 +61,6 @@
                                         <span class="px-3 py-1 text-sm font-medium text-green-800 bg-green-100 rounded-md">
                                             Reviewed
                                         </span>
-                                        @endif
-                                        @else
-                                        <span class="px-3 py-1 text-sm font-medium text-gray-800 bg-gray-100 rounded-md">{{ Str::ucfirst($item->delivery_status ?? 'Processing') }}</span>
                                         @endif
                                     </div>
                                 </li>

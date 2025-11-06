@@ -6,6 +6,8 @@ use App\Http\Requests\StoreReviewRequest;
 use App\Models\Product;
 use App\Models\Review;
 use App\Jobs\UpdateProductStatsJob;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Services\PointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,18 +17,25 @@ use Illuminate\Support\Facades\Log;
 
 class ReviewController extends Controller
 {
-    public function __construct(protected PointService $pointService)
-    {
-    }
+    public function __construct(protected PointService $pointService) {}
     public function store(StoreReviewRequest $request, Product $product)
     {
-        $review = $product->reviews()->create([
-            'user_id' => Auth::id(),
-            'rating' => $request->validated('rating'),
-            'title' => $request->validated('title'),
-            'content' => $request->validated('content'),
+        $validated = $request->validated();
+
+        $orderItem = OrderItem::find($validated['order_item_id']);
+        $product = $orderItem->product;
+        $user = $request->user();
+
+        $review = Review::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'rating' => $validated['rating'],
+            'title' => $validated['title'],
+            'content' => $validated['content'],
         ]);
 
+        $orderItem->review_id = $review->id;
+        $orderItem->save();
 
         Cache::forget("product:{$product->id}");
         Cache::forget("product:basic:{$product->id}");
@@ -42,7 +51,7 @@ class ReviewController extends Controller
             $review
         );
 
-        return back()->with('success', 'Thank you for your review!');
+        return redirect()->route('orders.history')->with('success', 'Thank you for your review!');
     }
 
     private function clearReviewsCache($productId)
@@ -55,7 +64,7 @@ class ReviewController extends Controller
     public function vote(Request $request, Review $review)
     {
         $startTime = microtime(true);
-        
+
         $request->validate(['vote_type' => ['required', 'string', 'in:up,down']]);
 
         $userId = Auth::id();
@@ -135,5 +144,20 @@ class ReviewController extends Controller
         }
 
         return back()->with('success', 'Thank you for your feedback!');
+    }
+
+    public function create(OrderItem $orderItem)
+    {
+        if ($orderItem->order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($orderItem->delivery_status !== 'delivered' || !is_null($orderItem->review_id) || now()->gt($orderItem->review_deadline_at)) {
+            return redirect()->route('orders.history')->with('error', 'You are not eligible to review this item at this time.');
+        }
+
+        $orderItem->load('product');
+
+        return view('reviews.create', ['orderItem' => $orderItem]);
     }
 }

@@ -22,7 +22,7 @@ class Coupon extends Model
     ];
 
     protected $casts = [
-        'value' => 'decimal:2',
+        'value' => 'double',
         'expires_at' => 'datetime',
         'usage_limit' => 'integer',
         'usage_count' => 'integer',

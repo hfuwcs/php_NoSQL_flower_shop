@@ -20,7 +20,7 @@
                     </x-nav-link>
                 </div>
             </div>
-            
+
             <!-- Search Form -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <form action="{{ route('search.index') }}" method="GET">
@@ -58,6 +58,9 @@
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Profile') }}
+                        </x-dropdown-link>
+                        <x-dropdown-link :href="route('rewards.my')">
+                            {{ __('My Rewards') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->

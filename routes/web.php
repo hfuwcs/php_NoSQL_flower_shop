@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     CartController,
     CheckoutController,
+    LanguageController,
     LeaderboardController,
     OrderHistoryController,
     OrderItemController,
@@ -41,6 +42,9 @@ Route::get('/search', [SearchController::class, 'index'])->name('search.index');
 // Stripe Webhook
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])
     ->name('stripe.webhook');
+
+//Language
+Route::get('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
 /*
 |--------------------------------------------------------------------------
@@ -118,6 +122,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/dashboard', fn() => view('dashboard'))
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
 
 /*
 |--------------------------------------------------------------------------

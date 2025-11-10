@@ -26,7 +26,7 @@ class Review extends Model
     protected $attributes = [
         'upvotes' => 0,
         'downvotes' => 0,
-        'comments' => [],
+        'comments' => '[]',
     ];
 
     protected function casts(): array

@@ -22,6 +22,8 @@ class Cart extends Model
     protected $attributes = [
         'points_total' => 0,
         'membership' => null,
+        'items' => '[]',
+        'applied_coupon' => '[]',
     ];
 
     protected $casts = [

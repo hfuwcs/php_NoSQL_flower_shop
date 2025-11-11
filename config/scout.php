@@ -140,9 +140,24 @@ return [
         'host' => env('MEILISEARCH_HOST', 'http://localhost:7700'),
         'key' => env('MEILISEARCH_KEY'),
         'index-settings' => [
-            // 'users' => [
-            //     'filterableAttributes'=> ['id', 'name', 'email'],
-            // ],
+            'products' => [
+                'filterableAttributes' => ['category', 'price'],
+                'searchableAttributes' => ['name', 'description', 'category'],
+                'sortableAttributes' => ['price', 'average_rating'],
+                'typoTolerance' => [
+                    'enabled' => true,
+                    'minWordSizeForTypos' => [
+                        'oneTypo' => 3,
+                        'twoTypos' => 7,
+                    ],
+                ],
+                'stopWords' => ['và', 'hoặc', 'là', 'cái', 'chiếc', 'những', 'thứ'],
+                'synonyms' => [
+                    'hoa' => ['flower', 'hoa'],
+                    'bó hoa' => ['bó', 'bouquet'],
+                    'vịt' => ['duck', 'con vịt'],
+                ],
+            ],
         ],
     ],
 

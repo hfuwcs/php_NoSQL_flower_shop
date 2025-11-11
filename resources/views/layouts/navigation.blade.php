@@ -30,16 +30,6 @@
             </div>
 
 
-            {{-- Nút chuyển sang Tiếng Việt, chỉ hiển thị nếu ngôn ngữ hiện tại là Tiếng Anh --}}
-            @if (app()->getLocale() == 'en')
-            <a href="{{ route('language.switch', 'vi') }}" class="text-sm text-gray-700 underline">Tiếng Việt</a>
-            @endif
-
-            {{-- Nút chuyển sang Tiếng Anh, chỉ hiển thị nếu ngôn ngữ hiện tại là Tiếng Việt --}}
-            @if (app()->getLocale() == 'vi')
-            <a href="{{ route('language.switch', 'en') }}" class="text-sm text-gray-700 underline">English</a>
-            @endif
-
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 {{--Giỏ hàng--}}

@@ -75,7 +75,7 @@
                         Total: <span id="cart-final-total" class="text-primary-dark">${{ number_format($cart['final_total'], 2) }}</span>
                     </p>
                 </div>
-                <a href="#" class="mt-4 inline-block bg-green-500 text-white font-bold py-3 px-8 rounded-md hover:bg-green-600 transition-colors">
+                <a href="{{ route('checkout.index') }}" class="mt-4 inline-block bg-green-500 text-white font-bold py-3 px-8 rounded-md hover:bg-green-600 transition-colors">
                     Proceed to Checkout
                 </a>
             </div>

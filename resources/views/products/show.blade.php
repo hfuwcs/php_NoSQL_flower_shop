@@ -44,37 +44,13 @@
                 <div class="mt-8">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Reviews ({{ $reviews->total() }})</h2>
                     @auth
-                    <form action="{{ route('reviews.store', $product) }}" method="POST" class="bg-gray-50 p-6 rounded-lg mb-8 border border-gray-200">
-                        @csrf
-                        <h3 class="text-lg font-semibold mb-4 text-gray-800">Write your review</h3>
-
-                        {{-- Rating Input --}}
-                        <div class="mb-4">
-                            <label for="rating" class="block text-sm font-medium text-gray-700">Rating</label>
-                            <select name="rating" id="rating" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-dark focus:ring focus:ring-primary-dark focus:ring-opacity-50">
-                                <option value="5">5 Stars</option>
-                                <option value="4">4 Stars</option>
-                                <option value="3">3 Stars</option>
-                                <option value="2">2 Stars</option>
-                                <option value="1">1 Star</option>
-                            </select>
-                            @error('rating') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-                            <input type="text" name="title" id="title" value="{{ old('title') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-dark focus:ring focus:ring-primary-dark focus:ring-opacity-50">
-                            @error('title') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="content" class="block text-sm font-medium text-gray-700">Content</label>
-                            <textarea name="content" id="content" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-dark focus:ring focus:ring-primary-dark focus:ring-opacity-50">{{ old('content') }}</textarea>
-                            @error('content') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
-
-                        <button type="submit" class="w-full bg-primary-dark text-white px-4 py-2 rounded-md hover:bg-pink-500 transition-colors font-semibold">Submit Review</button>
-                    </form>
+                    <div class="bg-gray-50 p-6 rounded-lg mb-8 border border-gray-200">
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Want to write a review?</h3>
+                        <p class="text-gray-600 mb-4">You can review products you've purchased from your order history.</p>
+                        <a href="{{ route('orders.history') }}" class="inline-block bg-primary-dark text-white px-4 py-2 rounded-md hover:bg-pink-500 transition-colors font-semibold">
+                            Go to My Orders
+                        </a>
+                    </div>
                     @else
                     <p class="mb-8 text-text-muted p-4 bg-gray-50 rounded-lg border">You must <a href="{{ route('login') }}" class="text-primary-dark underline font-semibold">log in</a> to write a review.</p>
                     @endauth

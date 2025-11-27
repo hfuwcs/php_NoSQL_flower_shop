@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 class ReviewController extends Controller
 {
     public function __construct(protected PointService $pointService) {}
-    public function store(StoreReviewRequest $request, Product $product)
+    public function store(StoreReviewRequest $request)
     {
         $validated = $request->validated();
 
@@ -148,11 +148,17 @@ class ReviewController extends Controller
 
     public function create(OrderItem $orderItem)
     {
-        if ($orderItem->order->user_id !== Auth::id()) {
+        if ((string) $orderItem->order->user_id !== (string) Auth::id()) {
             abort(403);
         }
 
-        if ($orderItem->delivery_status !== 'delivered' || !is_null($orderItem->review_id) || now()->gt($orderItem->review_deadline_at)) {
+        // Kiểm tra điều kiện review
+        $isDelivered = $orderItem->delivery_status === 'delivered';
+        $isNotReviewedYet = is_null($orderItem->review_id);
+        $isWithinReviewPeriod = is_null($orderItem->review_deadline_at) 
+            || now()->lte($orderItem->review_deadline_at);
+
+        if (!$isDelivered || !$isNotReviewedYet || !$isWithinReviewPeriod) {
             return redirect()->route('orders.history')->with('error', 'You are not eligible to review this item at this time.');
         }
 

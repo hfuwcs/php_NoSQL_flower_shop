@@ -31,7 +31,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'images' => 'array',
+            // 'images' => 'array',
             'average_rating' => 'double',
             'review_count' => 'integer',
             'price' => 'decimal:2',

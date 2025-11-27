@@ -19,12 +19,20 @@ class StoreReviewRequest extends FormRequest
             return false;
         }
 
-        $isOwner = $orderItem->order->user_id === Auth::id();
-        $isDelivered = $orderItem->delivery_status === 'delivered';
-        $isNotReviewedYet = is_null($orderItem->review_id);
-        $isPastReviewDate = now()->lte($orderItem->review_deadline_at);
+        // Kiểm tra người dùng có phải chủ sở hữu order không
+        $isOwner = (string) $orderItem->order->user_id === (string) Auth::id();
 
-        return $isOwner && $isDelivered && $isNotReviewedYet && $isPastReviewDate;
+        // Kiểm tra đã giao hàng chưa (chỉ 'delivered' mới được review theo logic trong view)
+        $isDelivered = $orderItem->delivery_status === 'delivered';
+
+        // Kiểm tra chưa review
+        $isNotReviewedYet = is_null($orderItem->review_id);
+        
+        // Kiểm tra còn trong thời hạn review (nếu không có deadline thì mặc định cho phép)
+        $isWithinReviewPeriod = is_null($orderItem->review_deadline_at) 
+            || now()->lte($orderItem->review_deadline_at);
+
+        return $isOwner && $isDelivered && $isNotReviewedYet && $isWithinReviewPeriod;
     }
 
     /**

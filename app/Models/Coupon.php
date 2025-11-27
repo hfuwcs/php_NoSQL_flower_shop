@@ -22,11 +22,26 @@ class Coupon extends Model
     ];
 
     protected $casts = [
-        'value' => 'double',
         'expires_at' => 'datetime',
         'usage_limit' => 'integer',
         'usage_count' => 'integer',
     ];
+
+    /**
+     * Accessor để convert MongoDB Decimal128 sang float.
+     */
+    public function getValueAttribute($value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \MongoDB\BSON\Decimal128) {
+            return (float) $value->__toString();
+        }
+
+        return (float) $value;
+    }
 
     /**
      * Kiểm tra xem mã giảm giá có hợp lệ để sử dụng hay không.

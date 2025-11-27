@@ -45,8 +45,8 @@
                                         </form>
                                         @elseif ($item->delivery_status === 'delivered')
                                         @if (is_null($item->review_id))
-                                        @if (now()->lte($item->review_deadline_at))
-                                        {{-- Đủ điều kiện: Đã nhận, chưa review, VÀ CÒN HẠN --}}
+                                        @if (is_null($item->review_deadline_at) || now()->lte($item->review_deadline_at))
+                                        {{-- Đủ điều kiện: Đã nhận, chưa review, VÀ CÒN HẠN (hoặc không có hạn) --}}
                                         <a href="{{ route('reviews.create', ['orderItem' => $item->id]) }}" class="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                                             Write a Review
                                         </a>

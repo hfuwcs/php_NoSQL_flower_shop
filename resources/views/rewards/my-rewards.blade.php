@@ -16,7 +16,7 @@
                                     @else
                                         <h2 class="text-lg font-bold text-gray-900">Reward Information Unavailable</h2>
                                     @endif
-                                    <p class="text-xs text-gray-500 mt-2">Claimed on: {{ $userReward->claimed_at->format('d/m/Y') }}</p>
+                                    <p class="text-xs text-gray-500 mt-2">Claimed on: {{ $userReward->claimed_at?->format('d/m/Y') ?? 'N/A' }}</p>
                                 </div>
                                 
                                 <div class="bg-indigo-50 p-3 rounded-lg text-center">

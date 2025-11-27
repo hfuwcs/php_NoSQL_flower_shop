@@ -152,6 +152,7 @@ class RewardController extends Controller
             'user_id' => $user->id,
             'reward_id' => $reward->id,
             'status' => 'claimed',
+            'claimed_at' => now(),
             'reward_data' => ['coupon_code' => $newCouponCode],
         ]);
     }
@@ -165,6 +166,7 @@ class RewardController extends Controller
             'user_id' => $user->id,
             'reward_id' => $reward->id,
             'status' => 'claimed', // Admin sẽ đổi thành 'processed' sau khi xử lý
+            'claimed_at' => now(),
             'reward_data' => [
                 'product_sku' => $reward->reward_details['product_sku'] ?? 'N/A',
             ],

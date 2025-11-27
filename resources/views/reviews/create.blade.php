@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold text-gray-800 mb-2">Write a review for:</h1>
                     <h2 class="text-xl font-semibold text-gray-700 mb-6">{{ $orderItem->product->name }}</h2>
 
-                    <form action="{{ route('reviews.store') }}" method="POST">
+                    <form action="{{ route('reviews.store', $orderItem->product) }}" method="POST">
                         @csrf
                         {{-- Gửi kèm ID của orderItem, đây là yếu tố quan trọng nhất --}}
                         <input type="hidden" name="order_item_id" value="{{ $orderItem->id }}">

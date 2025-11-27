@@ -111,9 +111,33 @@ class OrderResource extends Resource
                         ->required(),
                 ])
                 ->action(function (Order $record, array $data): void {
+                    $newStatus = $data['status'];
                     $record->update([
-                        'status' => $data['status'],
+                        'status' => $newStatus,
                     ]);
+                    
+                    // Sync delivery_status của các OrderItem theo Order status
+                    $itemStatus = match ($newStatus) {
+                        'processing' => 'processing',
+                        'shipped' => 'shipped',
+                        'completed' => 'delivered',
+                        'cancelled' => 'cancelled',
+                        default => null,
+                    };
+                    
+                    if ($itemStatus) {
+                        foreach ($record->items as $item) {
+                            $updateData = ['delivery_status' => $itemStatus];
+                            
+                            // Nếu chuyển sang delivered, set review_deadline_at
+                            if ($itemStatus === 'delivered' && is_null($item->review_deadline_at)) {
+                                $updateData['delivered_at'] = now();
+                                $updateData['review_deadline_at'] = now()->addDays(7);
+                            }
+                            
+                            $item->update($updateData);
+                        }
+                    }
                     
                     Notification::make()
                         ->title('Order status updated successfully')

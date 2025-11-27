@@ -31,6 +31,6 @@ class OrderItemController extends Controller
         $orderItem->review_deadline_at = now()->addDays(7);
         $orderItem->save();
 
-        return back()->with('success', 'Thank you for confirming the delivery of ' . $orderItem->product_name . '!');
+        return back()->with('success', 'Thank you for confirming the delivery !');
     }
 }

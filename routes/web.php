@@ -26,7 +26,7 @@ Route::get('/', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
 Route::post('/products/{product}/reviews', [ReviewController::class, 'store'])
-    ->middleware(['auth', 'throttle:3,10']) // 3 request / 10 phút
+    ->middleware(['auth', 'throttle:60,1']) // 60 request / 1 phút
     ->name('reviews.store');
 
 Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])

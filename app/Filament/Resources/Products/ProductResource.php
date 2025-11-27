@@ -18,6 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductResource extends Resource
 {
@@ -25,7 +26,9 @@ class ProductResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'Products';
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?string $recordRouteKeyName = '_id';
 
     public static function form(Schema $schema): Schema
     {
@@ -72,9 +75,17 @@ class ProductResource extends Resource
                     ->getStateUsing(fn($record) => $record->images[0] ?? null)
                     ->defaultImageUrl(url('/images/placeholder.png')),
                 TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('category')
-                    ->searchable(),
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        // Escape special regex characters for MongoDB
+                        $escapedSearch = \preg_quote($search, '/');
+                        // Search in name, description, and category with case-insensitive regex
+                        return $query->where(function (Builder $q) use ($escapedSearch) {
+                            $q->where('name', 'regex', "/{$escapedSearch}/i")
+                              ->orWhere('description', 'regex', "/{$escapedSearch}/i")
+                              ->orWhere('category', 'regex', "/{$escapedSearch}/i");
+                        });
+                    }),
+                TextColumn::make('category'),
                 TextColumn::make('price')
                     ->money('usd')
                     ->sortable(),

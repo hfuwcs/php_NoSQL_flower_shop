@@ -97,7 +97,6 @@ class RewardController extends Controller
                         'coupon_code' => $newCouponCode,
                     ],
                 ]);
-                $this->processRewardByType($lockedUser, $reward);
             });
         } catch (Throwable $e) {
             return back()->with('error', 'An error occurred while redeeming the reward: ' . $e->getMessage());

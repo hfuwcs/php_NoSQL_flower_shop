@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\PointService;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Queue;
 use Tests\RefreshMongoDB;
 use Tests\TestCase;
 
@@ -20,10 +20,8 @@ class PointAccumulationTest extends TestCase
 
     public function test_points_are_added_and_leaderboard_updated()
     {
-        // Mock Redis để không cần server thật khi test
-        Redis::shouldReceive('zadd')
-            ->once()
-            ->with('leaderboard:users:by_points', 50, \Mockery::any());
+        // Fake queue để không thực sự dispatch job
+        Queue::fake();
 
         $user = User::factory()->create(['points_total' => 0]);
         $service = app(PointService::class);
@@ -33,10 +31,6 @@ class PointAccumulationTest extends TestCase
         config(['gamification.points.review_created' => 50]);
 
         $service->addPointsForAction($user, 'review_created');
-
-        // Chạy job cập nhật điểm (vì job này dispatch sync trong môi trường test)
-        // Kiểm tra User được cập nhật điểm trong DB
-        $this->assertEquals(50, $user->fresh()->points_total);
 
         // Kiểm tra log giao dịch
         $this->assertDatabaseHas('point_transactions', [

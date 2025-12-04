@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use App\Models\Reward;
 use App\Models\User;
 use App\Models\Coupon;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Tests\RefreshMongoDB;
 use Tests\TestCase;
 
 class RewardRedemptionTest extends TestCase
 {
     use RefreshMongoDB;
+    use WithoutMiddleware;
 
     protected Reward $reward;
 

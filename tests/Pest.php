@@ -12,7 +12,10 @@
 */
 
 pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(Tests\RefreshMongoDB::class)
+    ->beforeEach(function () {
+        $this->setUpRefreshMongoDB();
+    })
     ->in('Feature');
 
 /*

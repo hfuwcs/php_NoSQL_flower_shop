@@ -18,6 +18,9 @@
         <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')
 
+            <!-- Flash Messages -->
+            <x-flash-messages />
+
             <!-- Page Heading -->
             @isset($header)
                 <header class="bg-white shadow">
@@ -29,7 +32,11 @@
 
             <!-- Page Content -->
             <main>
-                {{ $slot }}
+                @hasSection('content')
+                    @yield('content')
+                @else
+                    {{ $slot }}
+                @endif
             </main>
         </div>
         @stack('scripts')

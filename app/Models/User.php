@@ -20,6 +20,7 @@ class User extends MongoUser implements FilamentUser
         'name',
         'email',
         'password',
+        'is_admin',
     ];
 
     protected $hidden = [
@@ -27,11 +28,15 @@ class User extends MongoUser implements FilamentUser
         'remember_token',
     ];
 
+    /**
+     * Các attributes cần cast
+     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
         ];
     }
 
@@ -51,10 +56,26 @@ class User extends MongoUser implements FilamentUser
     }
 
     /**
-     * Kiểm tra user có quyền truy cập Filament admin panel không
+     * Kiểm tra user có phải admin không
+     */
+    public function isAdmin(): bool
+    {
+        return $this->is_admin === true;
+    }
+
+    /**
+     * Kiểm tra user có quyền truy cập Filament admin panel không.
+     * 
+     * Yêu cầu:
+     * - User phải có is_admin = true
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_admin === true;
+        // Chỉ kiểm tra admin panel
+        if ($panel->getId() === 'admin') {
+            return $this->isAdmin();
+        }
+        
+        return false;
     }
 }

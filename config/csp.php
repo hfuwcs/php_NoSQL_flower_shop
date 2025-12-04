@@ -10,7 +10,7 @@ return [
      * any class that implements `Spatie\Csp\Preset`
      */
     'presets' => [
-        App\Support\Csp\FlowerShopCspPreset::class,
+        Spatie\Csp\Presets\Basic::class,
     ],
 
     /**

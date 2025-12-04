@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Demo files (local only)
+DEMO_STARTUP.md
+start-demo.ps1
+test-performance.ps1

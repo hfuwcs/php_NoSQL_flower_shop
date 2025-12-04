@@ -1,80 +1,66 @@
 <?php
 
+// use Spatie\Csp\Directive;
+// use Spatie\Csp\Keyword;
+
 return [
+
+    /*
+     * Presets will determine which CSP headers will be set. A valid CSP preset is
+     * any class that implements `Spatie\Csp\Preset`
+     */
     'presets' => [
-        Spatie\Csp\Presets\Basic::class,
+        App\Support\Csp\FlowerShopCspPreset::class,
+    ],
+
+    /**
+     * Register additional global CSP directives here.
+     */
+    'directives' => [
+        // [Directive::SCRIPT, [Keyword::UNSAFE_EVAL, Keyword::UNSAFE_INLINE]],
     ],
 
     /*
-     * This policy which will be applied to all responses.
+     * These presets which will be put in a report-only policy. This is great for testing out
+     * a new policy or changes to existing CSP policy without breaking anything.
+     */
+    'report_only_presets' => [
+        //
+    ],
+
+    /**
+     * Register additional global report-only CSP directives here.
+     */
+    'report_only_directives' => [
+        // [Directive::SCRIPT, [Keyword::UNSAFE_EVAL, Keyword::UNSAFE_INLINE]],
+    ],
+
+    /*
+     * All violations against a policy will be reported to this url.
+     * A great service you could use for this is https://report-uri.com/
+     */
+    'report_uri' => env('CSP_REPORT_URI', ''),
+
+    /*
+     * Headers will only be added if this setting is set to true.
      */
     'enabled' => env('CSP_ENABLED', true),
 
-    /*
-     * The class responsible for generating the CSP header.
+    /**
+     * Headers will be added when Vite is hot reloading.
      */
-    'report_uri' => env('CSP_REPORT_URI', false),
+    'enabled_while_hot_reloading' => env('CSP_ENABLED_WHILE_HOT_RELOADING', false),
 
     /*
-     * If enabled, the CSP header will be added to all responses.
+     * The class responsible for generating the nonces used in inline tags and headers.
      */
-    'report_only' => env('CSP_REPORT_ONLY', false),
+    'nonce_generator' => Spatie\Csp\Nonce\RandomString::class,
 
     /*
-     * All directives will be forgotten and only the directives specified here
-     * will be used.
+     * Set false to disable automatic nonce generation and handling.
+     * This is useful when you want to use 'unsafe-inline' for scripts/styles
+     * and cannot add inline nonces.
+     * Note that this will make your CSP policy less secure.
      */
-    'directives' => [
-        'base-uri' => [
-            'self',
-        ],
-        'connect-src' => [
-            'self',
-            'api.stripe.com',
-        ],
-        'default-src' => [
-            'self',
-        ],
-        'form-action' => [
-            'self',
-        ],
-        'img-src' => [
-            'self',
-            'data:',
-            'via.placeholder.com',
-        ],
-        'media-src' => [
-            'self',
-        ],
-        'object-src' => [
-            'none',
-        ],
-        'script-src' => [
-            'self',
-            'js.stripe.com',
-            'm.stripe.network',
-        ],
-        'style-src' => [
-            'self',
-            'fonts.bunny.net',
-            "'unsafe-inline'",
-        ],
-        'font-src' => [
-            'self',
-            'fonts.bunny.net',
-        ],
-        'frame-src' => [
-            'self',
-            'js.stripe.com',
-        ],
-    ],
-
-    /*
-     * The given nonce will be configured on the response and can be used to
-     * enable inline scripts and styles.
-     */
-    'add_nonce_to' => [
-        'script-src',
-        'style-src',
-    ],
+    'nonce_enabled' => env('CSP_NONCE_ENABLED', true),
 ];

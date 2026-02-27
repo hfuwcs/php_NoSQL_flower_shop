@@ -1,4 +1,3 @@
-```markdown
 # Flower Shop - Laravel NoSQL Project
 
 A modern e-commerce platform built with Laravel 12, MongoDB, and Redis, designed to demonstrate high-performance data handling in a NoSQL environment.
@@ -212,4 +211,3 @@ This project is open-sourced software licensed under the [MIT license](https://o
 ## Author
 
 Developed by [@hfuwcs](https://github.com/hfuwcs)
-```
